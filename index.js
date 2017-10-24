@@ -21,30 +21,43 @@ exports.handler = function(event, context, callback) {
 
 var handlers = {
     'LaunchRequest' : function () {
-        this.emit('GetPottyWords');
+        // here, we needed to call the intent function, so Alexa is waiting for intent
+        this.emit('swear');
     },
     
-    'GetPottyWordsIntent': function () {
-        this.emit('GetPottyWords');
-    },
-    'GetPottyWords': function () {
+    'swear': function () {
         var pottyWordsIndex = Math.floor(Math.random() * SWEAR_WORDS.length);
         var randomSwearWord = SWEAR_WORDS[pottyWordsIndex];
-        
         var speechOutput = "Swear word of the day" + randomSwearWord;
-
-        this.emit(":tellWithCard", speechOutput, SKILL_NAME, randomSwearWord);
-
+        this.response.cardRenderer(SKILL_NAME, randomSwearWord);
+        this.response.speak(speechOutput);
+        this.emit(':responseReady');
+        //this.emit(":tellWithCard", speechOutput, SKILL_NAME, randomSwearWord);
     },
+    // 'GetPottyWords': function () {
+    //     var pottyWordsIndex = Math.floor(Math.random() * SWEAR_WORDS.length);
+    //     var randomSwearWord = SWEAR_WORDS[pottyWordsIndex];
+        
+    //     var speechOutput = "Swear word of the day" + randomSwearWord;
+
+    //     this.emit(":tellWithCard", speechOutput, SKILL_NAME, randomSwearWord);
+
+    // },
     'AMAZON.HelpIntent': function () {
         var speechOutput = "Say give me a swear word, or, you can say exit... What can I help you with?";
         var reprompt = "What can I help you with?";
-        this.emit(":ask", speechOutput, reprompt);
+        this.response.speak(STOP_MESSAGE);
+        this.emit(':responseReady');
+        //this.emit(":ask", speechOutput, reprompt);
     },
     'AMAZON.StopIntent': function () {
-        this.emit(":tell", "Goodbye!");
+        this.response.speak("Goodbye!");
+        this.emit(':responseReady');
+        //this.emit(":tell", "Goodbye!");
     },
     'AMAZON.CancelIntent': function () {
-        this.emit(":tell", "Goodbye!");
+        this.response.speak("Goodbye!");
+        this.emit(':responseReady');
+        //this.emit(":tell", "Goodbye!");
     },
 };
