@@ -2,62 +2,48 @@
 
 var Alexa = require("alexa-sdk");
 
-var SKILL_NAME = "say potty words";
-var APP_ID = "";
+var APP_ID = undefined;
 
-var SWEAR_WORDS = [
-    "Sugar",
-    "Shut the front door",
-    "Frig off",
-    "Pee off"
-];
+const counter = 0;
 
-exports.handler = function(event, context, callback) {
-    var alexa = Alexa.handler (event, context);
-    alexa.APP_ID = APP_ID;
-    alexa.registerHandlers(handlers);
-    alexa.execute();
+const states = {
+    START: "_START",
+    QUIZ: "_QUIZ"
+};
+
+const handlers = {
+    "LaunchRequest": function() {
+        this.handler.state = states.START;
+        this.emitWithState("Start");
+     },
+    "QuizIntent": function() {
+        this.handler.state = states.QUIZ;
+        this.emitWithState("Quiz");
+    },
+    "AnswerIntent": function() {
+        this.handler.state = states.START;
+        this.emitWithState("AnswerIntent");
+    },
+    "AMAZON.HelpIntent": function() {
+        this.response.speak(HELP_MESSAGE).listen(HELP_MESSAGE);
+        this.emit(":responseReady");
+    },
+    "Unhandled": function() {
+        this.handler.state = states.START;
+        this.emitWithState("Start");
+    }
 }
 
-var handlers = {
-    'LaunchRequest' : function () {
-        // here, we needed to call the intent function, so Alexa is waiting for intent
-        this.emit('swear');
-    },
-    
-    'swear': function () {
-        var pottyWordsIndex = Math.floor(Math.random() * SWEAR_WORDS.length);
-        var randomSwearWord = SWEAR_WORDS[pottyWordsIndex];
-        var speechOutput = "Swear word of the day" + randomSwearWord;
-        this.response.cardRenderer(SKILL_NAME, randomSwearWord);
-        this.response.speak(speechOutput);
-        this.emit(':responseReady');
-        //this.emit(":tellWithCard", speechOutput, SKILL_NAME, randomSwearWord);
-    },
-    // 'GetPottyWords': function () {
-    //     var pottyWordsIndex = Math.floor(Math.random() * SWEAR_WORDS.length);
-    //     var randomSwearWord = SWEAR_WORDS[pottyWordsIndex];
-        
-    //     var speechOutput = "Swear word of the day" + randomSwearWord;
 
-    //     this.emit(":tellWithCard", speechOutput, SKILL_NAME, randomSwearWord);
+// function defining question that alexa asks
+function getSong(counter, item) {
+        return "Here is song number " + counter + "Name the song! The song is coming in 5   4   3   2   1  " + item.lyrics;    
+}
 
-    // },
-    'AMAZON.HelpIntent': function () {
-        var speechOutput = "Say give me a swear word, or, you can say exit... What can I help you with?";
-        var reprompt = "What can I help you with?";
-        this.response.speak(STOP_MESSAGE);
-        this.emit(':responseReady');
-        //this.emit(":ask", speechOutput, reprompt);
-    },
-    'AMAZON.StopIntent': function () {
-        this.response.speak("Goodbye!");
-        this.emit(':responseReady');
-        //this.emit(":tell", "Goodbye!");
-    },
-    'AMAZON.CancelIntent': function () {
-        this.response.speak("Goodbye!");
-        this.emit(':responseReady');
-        //this.emit(":tell", "Goodbye!");
-    },
-};
+// returns the answer after allocated time.
+function getAnswer(item) {
+    return "The song was " + item.song + "by " + item.artist;
+}
+
+
+
