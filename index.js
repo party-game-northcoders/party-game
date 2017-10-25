@@ -34,15 +34,15 @@ const handlers = {
     }
 }
 
-const START_GAME_MESSAGE = "Hey party people! When you're ready to play, say start quiz";
-const HELP_MESSAGE = "Please say start quiz to start the music quiz";
+const START_GAME_MESSAGE = "Hey party people! When you're ready to play, say start quiz. ";
+const HELP_MESSAGE = "Please say start quiz to begin the music quiz. ";
 const GAME_END_MESSAGE = "You're shiit, goodbye";
-const START_QUIZ_MESSAGE = "I will ask you to name 5 songs";
+const START_QUIZ_MESSAGE = "I will ask you to name 5 songs. ";
 
 function getSarcyComment (type) {
     let speechCon = "";
-    if (type) return "<say-as interpret-as='interjection'>" + sarcyCommentsCorrect[getRandom(0, sarcyCommentsCorrect.length-1)] + "! </say-as><break strength='strong'/>";
-    else return "<say-as interpret-as='interjection'>" + sarcyCommentsIncorrect[getRandom(0, sarcyCommentsIncorrect.length-1)] + " </say-as><break strength='strong'/>";
+    if (type) return "<say-as interpret-as='interjection'>" + sarcyCommentsCorrect[getRandomSong(0, sarcyCommentsCorrect.length-1)] + "! </say-as><break strength='strong'/>";
+    else return "<say-as interpret-as='interjection'>" + sarcyCommentsIncorrect[getRandomSong(0, sarcyCommentsIncorrect.length-1)] + " </say-as><break strength='strong'/>";
 }
 
 const sarcyCommentsCorrect = ["Well done!", "Smarty pants"];
@@ -86,17 +86,18 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ, {
         {
             this.attributes["response"] = START_QUIZ_MESSAGE + " ";
         }
-
+        // gets random object(from data)
         let random = getRandomSong(0, data.length-1);
         let song = data[random];
 
-        let propertyArray = Object.getOwnPropertyNames(song);
-        let property = propertyArray[getRandomSong(1, propertyArray.length-1)];
+         let propertyArray = Object.getOwnPropertyNames(song);
+         let property = "artist";
 
         this.attributes["quizsong"] = song;
         this.attributes["quizproperty"] = property;
         this.attributes["counter"]++;
 
+        // property is the key from data
         let songQuestion = getSong(this.attributes["counter"], property, song);
         let songGuess = this.attributes["response"] + songQuestion;
 
@@ -109,7 +110,7 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ, {
         let property = this.attributes["quizproperty"]
 
         let correct = compareSlots(this.event.request.intent.slots, song[property]);
-
+        
         if (correct) {
             response = getSarcyComment(true);
             this.attributes["quizscore"]++;
@@ -159,7 +160,7 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ, {
 }) 
 
 // gets object in data array
-function getSong(slots) {
+function fetchSong(slots) {
     // get keys from data
     let propertyArray = Object.getOwnPropertyNames(data[0]);
     let value;
@@ -182,13 +183,13 @@ function getSong(slots) {
 }
 
 // function defining song that alexa uses for question
-function getSong(counter, item) {
-    return "Here is song number " + counter + "Name the song! The song is coming in 5   4   3   2   1  " + item.lyrics;    
+function getSong(counter, property, song) {
+    return "Here is song number " + counter + " Name the song. The song is coming in 5. 4. 3. 2. 1. " + song.lyrics;    
 }
 
 // returns the answer after allocated time.
-function getAnswer(item) {
-return "The song was " + item.song + "by " + item.artist;
+function getAnswer(property, song) {
+return "The song was " + song.song + "bye " + song[property];
 }
 
 function getRandomSong (startNum, endNum) {
@@ -198,7 +199,7 @@ function getRandomSong (startNum, endNum) {
 function compareSlots(slots, value) {
     for (let slot in slots) {
         if (slots[slot].value !== undefined) {
-            if(slots[slot].value.toString().toLowerCase() === value.toString().toLowerCase()) {
+            if (slots[slot].value.toString().toLowerCase() === value.toString().toLowerCase()) {
                 return true;
             }
         }
@@ -207,11 +208,12 @@ function compareSlots(slots, value) {
 }
 
 function getCurrentScore (score, counter) {
-    return "Good lord, your current score is " + score " out of " + counter + ". ";
+    return "Good lord, your current score is " + score + " out of " + counter + ". ";
+ //return "Your current score is " + score + " out of " + counter + ". "; }
 }
 
 function getFinalScore (score, counter) {
-    return "Bloody hell, you scored " + score " out of " + counter + ". ";
+    return "Bloody hell, you scored " + score + " out of " + counter + ". ";
 }
 
 exports.handler = (event, context) => {
