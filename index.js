@@ -40,7 +40,7 @@ const handlers = {
 
 const START_GAME_MESSAGE = "Hey party people! When you're ready to play, say start quiz. ";
 const HELP_MESSAGE = "Please say start quiz to begin the music quiz. ";
-const GAME_END_MESSAGE = "You're shiit, goodbye";
+const GAME_END_MESSAGE = "Goodbye";
 const START_QUIZ_MESSAGE = "I will ask you to name 5 songs. ";
 
 function getSarcyComment (type) {
@@ -88,24 +88,23 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
     },
 
     "AskQuestion": function() {
-        if (this.attributes["counter"] == 0)
-        {
+        if (this.attributes["counter"] == 0) {
             this.attributes["response"] = START_QUIZ_MESSAGE + " ";
         }
         // gets random object(from data)
-        let random = getRandomSong(0, data.length-1);
-        let song = data[random];
-        
-        fetchsongAPI().then((lyrics) => {
-            let propertyArray = Object.getOwnPropertyNames(song);
+        // let random = getRandomSong(0, data.length-1);
+        // let song = data[random];
+        let songObj = songRandomiser(songs);
+        fetchsongAPI(songObj.title, songObj.singer).then((data) => {
+            // let propertyArray = Object.getOwnPropertyNames(data.song);
             let property = "artist";
     
-           this.attributes["quizsong"] = song;
+           this.attributes["quizsong"] = data;
            this.attributes["quizproperty"] = property;
            this.attributes["counter"]++;
     
            // property is the key from data
-           let songQuestion = getSong(this.attributes["counter"], property, song, lyrics);
+           let songQuestion = getSong(this.attributes["counter"], property, data.song, data.lyrics);
            let songGuess = this.attributes["response"] + songQuestion;
     
            this.emit(":ask", songGuess, songQuestion);
@@ -116,10 +115,11 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
     "AnswerIntent": function() {
         let response = "";
         let speechOutput = "";
-        let song = this.attributes["quizsong"];
+        let data = this.attributes["quizsong"];
         let property = this.attributes["quizproperty"]
+    
 
-        let correct = compareSlots(this.event.request.intent.slots, song[property]);
+        let correct = compareSlots(this.event.request.intent.slots, data[property]);
         
         if (correct) {
             response = getSarcyComment(true);
@@ -129,7 +129,7 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
             response = getSarcyComment(false);
         }
 
-        response += getAnswer(property, song);
+        response += getAnswer(property, data);
 
         if (this.attributes["counter"] < 5) {
             response += getCurrentScore(this.attributes["quizscore"], this.attributes["counter"]);
@@ -193,8 +193,8 @@ function fetchSong(slots) {
 }
 
 // function defining song that alexa uses for question
-function getSong(counter, property, song,lyrics) {
-    return "Here is song number " + counter + " Name the song. The song is coming in 5. 4. 3. 2. 1. " + lyrics;    
+function getSong(counter, property, song, lyrics) {
+    return "Here is song number " + counter + ". Name the artist. The song is coming in 5. 4. 3. 2. 1. " + lyrics;    
 }
 
 // returns the answer after allocated time.
@@ -233,64 +233,193 @@ exports.handler = (event, context, callback) => {
     alexa.execute();
 };
 
-function fetchsongAPI() {
-    return axios.get(`https://api.musixmatch.com/ws/1.1/matcher.lyrics.get?q_track=Halo&q_artist=Beyonce&apikey=c6af8e74da168c2f810eab97f6a8f603`)
-    .then(data => {
-       return data.data.message.body.lyrics.lyrics_body
+// randomly gets artist and song for fetch request
+function songRandomiser(arr) {
+    let random = Math.floor(Math.random() * arr.length);
+    let songObj = {
+        title: arr[random].song,
+        singer: arr[random].artist
+    }
+    return songObj;
     
+}
+
+function fetchsongAPI(title, singer) {
+    return axios.get(`https://api.musixmatch.com/ws/1.1/matcher.lyrics.get?q_track=${title}&q_artist=${singer}&apikey=c6af8e74da168c2f810eab97f6a8f603`)
+    .then(response => {
+        let lyrics = response.data.message.body.lyrics.lyrics_body;
+        //take first 3 new lines 
+        let lyricsArray = lyrics.split("\n");
+        let lyricsOutput = lyricsArray.slice(0, 3).join(". ")+".";
+        let data = {
+            song: title,
+            artist: singer,
+            lyrics: lyricsOutput
+        };
+        return data;
     })
 }
 
-
-const data = [
+const songs = [
     {
         artist: "Beyoncé", 
-        song: "Halo",
-        lyrics: "Remember those walls I built?.  Well, baby they're tumbling down.  And they didn't even put up a fight.  They didn't even make a sound"
+        song: "Halo"
     }, 
     {
         artist: "David Bowie",
-        song: "Starman",
-        lyrics: "There's a starman waiting in the sky.  He'd like to come and meet us.  But he thinks he'd blow our minds"    
+        song: "Space Oddity"
     },
     {
         artist: "Taylor Swift",
-        song: "Shake It Off",
-        lyrics: "I stay out too late.  Got nothing in my brain.  That's what people say, mm-mm.  That's what people say, mm-mm"
+        song: "Shake It Off"
     },
     {
         artist: "Take That",
-        song: "Rule the World",
-        lyrics: "You light the skies, up above me.  A star, so bright, you blind me"
+        song: "Rule the World"
     },
     {
         artist: "LMFAO",
-        song: "Rock the World",
-        lyrics: "Party rock is in the house tonight.  Everybody just have a good time.  And we gon' make you loose your mind (wooo!)"
+        song: "Rock the World"
     },
     {
         artist: "The Beatles",
-        song: "Hey Jude",
-        lyrics: "Hey Jude, don't make it bad.  Take a sad song and make it better"
+        song: "Hey Jude"
     },
     {
         artist: "Diana Ross and Lionel Ritchie", 
-        song: "Endless Love",
-        lyrics: "My love.  There's only you in my life.  The only thing that's bright.  My first love"
+        song: "Endless Love"
     },
     {
         artist: "Bryan Adams",
-        song: "(Everything I Do) I Do It For You",
-        lyrics: "Look into my eyes .   you will see.  What you mean to me..  Search your heart, search your soul.  And when you find me there you'll search no more."
+        song: "(Everything I Do) I Do It For You"
     },
     {
         artist: "Adele",
-        song: "Rolling In The Deep",
-        lyrics: "There's a fire starting in my heart.  Reaching a fever pitch and it's bring me out the dark"
+        song: "Rolling In The Deep"
     },
     {
         artist: "Frank Sinatra",
-        song: "New York, New York",
-        lyrics: "Start spreading the news.  I am leaving today"
+        song: "New York, New York"
+    },
+    {
+        artist: "Madonna",
+        song: "Music"
+    },
+    {
+        artist: "Elvis",
+        song: "Jailhouse Rock"
+    },
+    {
+        artist: "Cher",
+        song: "Believe"
+    },
+    {
+        artist: "Irene Carr",
+        song: "Fame"
+    },
+    {
+        artist: "Ricky Martin",
+        song: "Livin' La Vida Loca"
+    },
+    {
+        artist: "Nirvana",
+        song: "Smells Like Teen Spirit"
+    },
+    {
+        artist: "Aerosmith",
+        song: "Walk This Way"
+    },
+    {
+        artist: "Spice Girls",
+        song: "Wannabe"
+    },
+    {
+        artist: "Michael Jackson",
+        song: "Thriller"
+    },
+    {
+        artist: "Public Enemy",
+        song: "Don't Believe The Hype"
+    },
+    {
+        artist: "Beastie Boys",
+        song: "Fight For Your Right"
+    },
+    {
+        artist: "Bob Dylan",
+        song: "Subterranean Homesick Blues"
+    },
+    {
+        artist: "Britney Spears",
+        song: "Oops!...I Did It Again"
+    },
+    {
+        artist: "Drake",
+        song: "Hold On We're Going Home"
+    },
+    {
+        artist: "Calvin Harris",
+        song: "Summer"
+    },
+    {
+        artist: "Amerie",
+        song: "One Thing"
+    },
+    {
+        artist: "50 Cent",
+        song: "P.I.M.P"
     }
 ];
+
+// const data = [
+//     {
+//         artist: "Beyoncé", 
+//         song: "Halo",
+//         lyrics: "Remember those walls I built?.  Well, baby they're tumbling down.  And they didn't even put up a fight.  They didn't even make a sound"
+//     }, 
+//     {
+//         artist: "David Bowie",
+//         song: "Starman",
+//         lyrics: "There's a starman waiting in the sky.  He'd like to come and meet us.  But he thinks he'd blow our minds"    
+//     },
+//     {
+//         artist: "Taylor Swift",
+//         song: "Shake It Off",
+//         lyrics: "I stay out too late.  Got nothing in my brain.  That's what people say, mm-mm.  That's what people say, mm-mm"
+//     },
+//     {
+//         artist: "Take That",
+//         song: "Rule the World",
+//         lyrics: "You light the skies, up above me.  A star, so bright, you blind me"
+//     },
+//     {
+//         artist: "LMFAO",
+//         song: "Rock the World",
+//         lyrics: "Party rock is in the house tonight.  Everybody just have a good time.  And we gon' make you loose your mind (wooo!)"
+//     },
+//     {
+//         artist: "The Beatles",
+//         song: "Hey Jude",
+//         lyrics: "Hey Jude, don't make it bad.  Take a sad song and make it better"
+//     },
+//     {
+//         artist: "Diana Ross and Lionel Ritchie", 
+//         song: "Endless Love",
+//         lyrics: "My love.  There's only you in my life.  The only thing that's bright.  My first love"
+//     },
+//     {
+//         artist: "Bryan Adams",
+//         song: "(Everything I Do) I Do It For You",
+//         lyrics: "Look into my eyes .   you will see.  What you mean to me..  Search your heart, search your soul.  And when you find me there you'll search no more."
+//     },
+//     {
+//         artist: "Adele",
+//         song: "Rolling In The Deep",
+//         lyrics: "There's a fire starting in my heart.  Reaching a fever pitch and it's bring me out the dark"
+//     },
+//     {
+//         artist: "Frank Sinatra",
+//         song: "New York, New York",
+//         lyrics: "Start spreading the news.  I am leaving today"
+//     }
+// ];
