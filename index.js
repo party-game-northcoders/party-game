@@ -1,5 +1,9 @@
 "use strict";
 
+const bodyParser = require("body-parser");
+const axios = require('axios');
+
+
 var Alexa = require("alexa-sdk");
 
 var APP_ID = undefined;
@@ -74,7 +78,7 @@ const startHandlers = Alexa.CreateStateHandler(states.START, {
     }
 })
 
-const quizHandlers = Alexa.CreateStateHandler(states.QUIZ, {
+const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
     "Quiz": function() {
         this.attributes["response"] = "";
         this.attributes["counter"] = 0;
@@ -89,6 +93,7 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ, {
         // gets random object(from data)
         let random = getRandomSong(0, data.length-1);
         let song = data[random];
+        let lyrics = fetchsongAPI();
 
          let propertyArray = Object.getOwnPropertyNames(song);
          let property = "artist";
@@ -98,7 +103,7 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ, {
         this.attributes["counter"]++;
 
         // property is the key from data
-        let songQuestion = getSong(this.attributes["counter"], property, song);
+        let songQuestion = getSong(this.attributes["counter"], property, song, lyrics);
         let songGuess = this.attributes["response"] + songQuestion;
 
         this.emit(":ask", songGuess, songQuestion);
@@ -183,8 +188,8 @@ function fetchSong(slots) {
 }
 
 // function defining song that alexa uses for question
-function getSong(counter, property, song) {
-    return "Here is song number " + counter + " Name the song. The song is coming in 5. 4. 3. 2. 1. " + song.lyrics;    
+function getSong(counter, property, song,lyrics) {
+    return "Here is song number " + counter + " Name the song. The song is coming in 5. 4. 3. 2. 1. " + lyrics;    
 }
 
 // returns the answer after allocated time.
@@ -216,12 +221,20 @@ function getFinalScore (score, counter) {
     return "Bloody hell, you scored " + score + " out of " + counter + ". ";
 }
 
-exports.handler = (event, context) => {
-    const alexa = Alexa.handler(event, context);
+exports.handler = (event, context, callback) => {
+    const alexa = Alexa.handler(event, context,callback);
     alexa.appId = APP_ID;
     alexa.registerHandlers(handlers, startHandlers, quizHandlers);
     alexa.execute();
 };
+
+function fetchsongAPI() {
+    axios.get(`https://api.musixmatch.com/ws/1.1/matcher.lyrics.get?q_track=Halo&q_artist=Beyonce&apikey=c6af8e74da168c2f810eab97f6a8f603`)
+    .then(data => {
+        data.data.message.body.lyrics.lyrics_body
+    })
+}
+
 
 const data = [
     {
