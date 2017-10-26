@@ -83,8 +83,10 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
         this.attributes["response"] = "";
         this.attributes["counter"] = 0;
         this.attributes["quizscore"] = 0;
+       // this.attributes["lyrics"] = fetchsongAPI();
         this.emitWithState("AskQuestion");
     },
+
     "AskQuestion": function() {
         if (this.attributes["counter"] == 0)
         {
@@ -93,20 +95,23 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
         // gets random object(from data)
         let random = getRandomSong(0, data.length-1);
         let song = data[random];
-        let lyrics = fetchsongAPI();
+        
+        fetchsongAPI().then((lyrics) => {
+            let propertyArray = Object.getOwnPropertyNames(song);
+            let property = "artist";
+    
+           this.attributes["quizsong"] = song;
+           this.attributes["quizproperty"] = property;
+           this.attributes["counter"]++;
+    
+           // property is the key from data
+           let songQuestion = getSong(this.attributes["counter"], property, song, lyrics);
+           let songGuess = this.attributes["response"] + songQuestion;
+    
+           this.emit(":ask", songGuess, songQuestion);
 
-         let propertyArray = Object.getOwnPropertyNames(song);
-         let property = "artist";
+        });
 
-        this.attributes["quizsong"] = song;
-        this.attributes["quizproperty"] = property;
-        this.attributes["counter"]++;
-
-        // property is the key from data
-        let songQuestion = getSong(this.attributes["counter"], property, song, lyrics);
-        let songGuess = this.attributes["response"] + songQuestion;
-
-        this.emit(":ask", songGuess, songQuestion);
     },
     "AnswerIntent": function() {
         let response = "";
@@ -229,9 +234,10 @@ exports.handler = (event, context, callback) => {
 };
 
 function fetchsongAPI() {
-    axios.get(`https://api.musixmatch.com/ws/1.1/matcher.lyrics.get?q_track=Halo&q_artist=Beyonce&apikey=c6af8e74da168c2f810eab97f6a8f603`)
+    return axios.get(`https://api.musixmatch.com/ws/1.1/matcher.lyrics.get?q_track=Halo&q_artist=Beyonce&apikey=c6af8e74da168c2f810eab97f6a8f603`)
     .then(data => {
-        data.data.message.body.lyrics.lyrics_body
+       return data.data.message.body.lyrics.lyrics_body
+    
     })
 }
 
