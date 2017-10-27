@@ -3,7 +3,6 @@
 const bodyParser = require("body-parser");
 const axios = require('axios');
 
-
 var Alexa = require("alexa-sdk");
 
 var APP_ID = undefined;
@@ -13,7 +12,7 @@ const counter = 0;
 const states = {
     START: "_START",
     QUIZ: "_QUIZ"
-};
+}
 
 const handlers = {
     "LaunchRequest": function() {
@@ -83,14 +82,21 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
         this.attributes["response"] = "";
         this.attributes["counter"] = 0;
         this.attributes["quizscore"] = 0;
-       // this.attributes["lyrics"] = fetchsongAPI();
-        this.emitWithState("AskQuestion");
+        // call spotify function to populate artist and songs array
+        // next will go in .then
+        const artists = fetchArtistNames()
+        .then((artists) => {
+            this.response.speak(artists)
+            this.emitWithState("AskQuestion");
+        })
+        
     },
 
     "AskQuestion": function() {
         if (this.attributes["counter"] == 0) {
             this.attributes["response"] = START_QUIZ_MESSAGE + " ";
         }
+        
         // gets random object(from data)
         // let random = getRandomSong(0, data.length-1);
         // let song = data[random];
@@ -259,6 +265,29 @@ function fetchsongAPI(title, singer) {
         return data;
     })
 }
+const spotifyHeaders = {
+    headers: {
+        Accept: 'application/json',
+        Authorization:"Bearer BQDwOI4wVn9NMP_WjYoKZ_vIqr14_7i8BqDDjiTCJzHu652PT96cGqQf9Ix15t4U-ZrVoh5LtIJED9DAzC1R6cBH7E1vJdFpYjnDeaO_cyOCQxmfIsSO11wm4VJnLA5qi9l7plXH1jX-OFBDCiSsItxbDS4JdWSYVI4i5rDedHZCNWRfOu5mHrB8fmopHAr9X0AMOBGO2GbjRRx-Bc3z1UNEwjazUTJ7A2SQNLGWk7bXSj3jeA_tFUJzmNfTVa5_oCwFeFE1qqKizJcJtiQnvONWZYipWs7b0f0gN3bpz93_7EPDWNwigE4GJ47QinAWSS7MFw"
+    }  
+};
+
+function fetchArtistNames(spotifyHeaders) {
+    return axios.get("https://api.spotify.com/v1/me/top/artists", spotifyHeaders) 
+    .then((response)=>{
+        let songArr = response.data.items.map(function (artist) {
+        return {
+                name: artist.name, 
+                id: artist.id, 
+                popularity:artist.popularity
+            }
+        })
+        return songArr;
+    })
+    .catch((err) => {
+        throw err;
+    })
+}
 
 const songs = [
     {
@@ -370,56 +399,3 @@ const songs = [
         song: "P.I.M.P"
     }
 ];
-
-// const data = [
-//     {
-//         artist: "Beyoncé", 
-//         song: "Halo",
-//         lyrics: "Remember those walls I built?.  Well, baby they're tumbling down.  And they didn't even put up a fight.  They didn't even make a sound"
-//     }, 
-//     {
-//         artist: "David Bowie",
-//         song: "Starman",
-//         lyrics: "There's a starman waiting in the sky.  He'd like to come and meet us.  But he thinks he'd blow our minds"    
-//     },
-//     {
-//         artist: "Taylor Swift",
-//         song: "Shake It Off",
-//         lyrics: "I stay out too late.  Got nothing in my brain.  That's what people say, mm-mm.  That's what people say, mm-mm"
-//     },
-//     {
-//         artist: "Take That",
-//         song: "Rule the World",
-//         lyrics: "You light the skies, up above me.  A star, so bright, you blind me"
-//     },
-//     {
-//         artist: "LMFAO",
-//         song: "Rock the World",
-//         lyrics: "Party rock is in the house tonight.  Everybody just have a good time.  And we gon' make you loose your mind (wooo!)"
-//     },
-//     {
-//         artist: "The Beatles",
-//         song: "Hey Jude",
-//         lyrics: "Hey Jude, don't make it bad.  Take a sad song and make it better"
-//     },
-//     {
-//         artist: "Diana Ross and Lionel Ritchie", 
-//         song: "Endless Love",
-//         lyrics: "My love.  There's only you in my life.  The only thing that's bright.  My first love"
-//     },
-//     {
-//         artist: "Bryan Adams",
-//         song: "(Everything I Do) I Do It For You",
-//         lyrics: "Look into my eyes .   you will see.  What you mean to me..  Search your heart, search your soul.  And when you find me there you'll search no more."
-//     },
-//     {
-//         artist: "Adele",
-//         song: "Rolling In The Deep",
-//         lyrics: "There's a fire starting in my heart.  Reaching a fever pitch and it's bring me out the dark"
-//     },
-//     {
-//         artist: "Frank Sinatra",
-//         song: "New York, New York",
-//         lyrics: "Start spreading the news.  I am leaving today"
-//     }
-// ];
