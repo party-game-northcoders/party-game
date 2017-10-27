@@ -13,7 +13,7 @@ const spotifyHeaders = {
   headers: {
     Accept: "application/json",
     Authorization:
-      "Bearer BQCjotcS4ALVz8s9lewnLPKKRCmwG7P7fFXTLHgdJjcsHn7hWCA04uYLjptMv9MfLUN3K0gICMahCcgq367rWl27n8Y6WCkgU8sju8d3OuLelM_Q2x5etdPJGoukIYg90ZwvmBY932gwLI4v4j8rSCwONNvxuvMPQF7rFR9zlM78Bvx4Wbhsz-eKC_Yipb8OAXOOch9MN6KR-Dbtq7xunA3X1WTeUKCY9H9ahZgnxlFVvNrj9jVJFtEMja9BEef7ZzaoXm19nl0r8o1lcGh_rVxNVJjvujW-lSzYA2M9WEZMYv3Fow5Z0s2TTvYFOSykaXR0rA"
+      "Bearer BQA6fQjcUuI6PIVwRDZmG0tt-N411ZWapsc6SzbNf-COQRKjsUJu7O9AmuFt9TnbeJDm_hTgiJWPj1NGXCb27dDbH4YHoG9109ejD1LDsVvA4QNqzkmjYvLhcGLfLB8njgjv1FqcqZToBjuaPB4gFb2Y9PQ4SZTmJBVeFZK2GkGBk4vf_VmjLlPuGFQeh2_or123RlrR91oZG06BPN7-n3flX6J05thKou2rB84nkAHmI9-4aY56QnkePWdiV2GGNfks0osIMUGqCwuGAyyyKT9Jnh8zcaW1bdGo4rj6bstWBGOsJ9dhjiUFEc_zOvKTNEbF5Q"
   }
 };
 
@@ -63,6 +63,11 @@ app.get("/topArtistsSongs", function(req, res) {
       throw err;
     });
 });
+
+// get artists
+// get top songs for each
+
+
 
 // -- Artist generator --
 // the results is the whole 50 artists - from here we will take the most popular 30 (if available) artist IDs
