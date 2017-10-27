@@ -6,7 +6,7 @@ const axios = require('axios');
 app.use(bodyParser.json())
 app.listen(3000)
 
-
+const artistsForGame = [];
 // authentication passed through via headers
 const spotifyHeaders = {
     headers: {
@@ -19,7 +19,15 @@ const spotifyHeaders = {
 app.get('/', function (req, res) {
     return axios.get("https://api.spotify.com/v1/me/top/artists", spotifyHeaders) 
     .then((response)=>{
-        res.send(response.data)
+        response.data.items.map(function (artist) {
+            artistsForGame.push({
+                name: artist.name, 
+                id: artist.id, 
+                popularity:artist.popularity
+            })
+        })
+        res.send(artistsForGame)
+        console.log(artistsForGame)
     })
     .catch((err) => {
         throw err;
