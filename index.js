@@ -84,7 +84,7 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
         this.attributes["quizscore"] = 0;
         // call spotify function to populate artist and songs array
         // next will go in .then
-        const artists = fetchArtistNames()
+        fetchArtistNames()
         .then((artists) => {
             this.response.speak(artists)
             this.emitWithState("AskQuestion");
@@ -265,22 +265,24 @@ function fetchsongAPI(title, singer) {
         return data;
     })
 }
-const spotifyHeaders = {
-    headers: {
-        Accept: 'application/json',
-        Authorization:"Bearer BQDwOI4wVn9NMP_WjYoKZ_vIqr14_7i8BqDDjiTCJzHu652PT96cGqQf9Ix15t4U-ZrVoh5LtIJED9DAzC1R6cBH7E1vJdFpYjnDeaO_cyOCQxmfIsSO11wm4VJnLA5qi9l7plXH1jX-OFBDCiSsItxbDS4JdWSYVI4i5rDedHZCNWRfOu5mHrB8fmopHAr9X0AMOBGO2GbjRRx-Bc3z1UNEwjazUTJ7A2SQNLGWk7bXSj3jeA_tFUJzmNfTVa5_oCwFeFE1qqKizJcJtiQnvONWZYipWs7b0f0gN3bpz93_7EPDWNwigE4GJ47QinAWSS7MFw"
-    }  
-};
 
-function fetchArtistNames(spotifyHeaders) {
+function fetchArtistNames() {
+    let songArr =[];
+
+    const spotifyHeaders = {
+        headers: {
+            Accept: 'application/json',
+            Authorization:"Bearer BQA6fQjcUuI6PIVwRDZmG0tt-N411ZWapsc6SzbNf-COQRKjsUJu7O9AmuFt9TnbeJDm_hTgiJWPj1NGXCb27dDbH4YHoG9109ejD1LDsVvA4QNqzkmjYvLhcGLfLB8njgjv1FqcqZToBjuaPB4gFb2Y9PQ4SZTmJBVeFZK2GkGBk4vf_VmjLlPuGFQeh2_or123RlrR91oZG06BPN7-n3flX6J05thKou2rB84nkAHmI9-4aY56QnkePWdiV2GGNfks0osIMUGqCwuGAyyyKT9Jnh8zcaW1bdGo4rj6bstWBGOsJ9dhjiUFEc_zOvKTNEbF5Q"
+        }  
+    };
     return axios.get("https://api.spotify.com/v1/me/top/artists", spotifyHeaders) 
     .then((response)=>{
-        let songArr = response.data.items.map(function (artist) {
-        return {
+        response.data.items.map(function (artist) {
+        songArr.push({
                 name: artist.name, 
                 id: artist.id, 
                 popularity:artist.popularity
-            }
+            })
         })
         return songArr;
     })
