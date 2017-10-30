@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title></title>
+</head>
+<body id="mainBd">
+    <div class="center">
+        <button id="song" onclick ="musicPlayer2();">START PLAYING</button>
+    </div>   
+</body>
+<script>
+
+
+var Adele = new Audio ('https://p.scdn.co/mp3-preview/ce9c1c78df581b33a5d171f657ca2c5a1da6a979?cid=8897482848704f2a8f8d7c79726a70d');
+
+
+//music player
+function musicPlayer() {
+if (!Adele.paused) {
+    Adele.pause();
+}
+ else{
+    Adele.play();	
+     //add comment about audio playing
+    }
+}
+
+
+function musicPlayer2() {
+    Adele.play();
+    setInterval(function(){ Adele.pause(); }, 10000);
+}
+
+</script>
+</html>

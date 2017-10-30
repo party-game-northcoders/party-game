@@ -6,6 +6,8 @@ const axios = require("axios");
 app.use(bodyParser.json());
 app.listen(3000);
 
+const fs = require('fs');
+
 const artistsForGame = [];
 const songsForGame = [];
 // authentication passed through via headers
@@ -13,7 +15,10 @@ const spotifyHeaders = {
   headers: {
     Accept: "application/json",
     Authorization:
-      "Bearer BQCVmOYo3rIhPPRDC5WF0Wv_YJERJIJeaQvwKgUYHkwemD-GEJmfXhS8XuD3AMs8eeI0GN2YyhyeojAfcocIWboway75suLp2U-xYdeioTudlYUviPk62SV7RkLM4psql55JD4yZFXLizRBprH7OYeOF-GJHMByHSCiTpueyJkkaEK_PnYcl_qg-fgJT-IpwSyRuEohmdLLE3B8mMVbbyMYuQu22a1TmS3vE3ZVHdFqaLHpA2yuTGyXUiYEhuQtOrzN4ZF8cwt-PK2CU7iOQyQR0uHHJHsF_QII5vQMovvPpwtW6Rj3JrNv3Rte8aBSsnaWVeA"
+      "Bearer BQA9R4whEHFiZVOZhD5JU786CGtum7pRLTtDHUyS0siRoMxXFQk0SvRbfCW1tBIuGHPT_3C2dcGN-GOkFzMSNiWT4iq3YzmOrKQ5pK2mPnzIOtP3Y3aszRfIKaiSjCxZst4pQMQtochrj8p1cdpZmYhj6AOJr2Jha0TGw3W1x2BqKpExgMT1xKePj4j3pH-fBex596n3OSisaMawBSJGsFMBWPgM1vA8uLOp9L-rP_hylhdHtA-kTVNHFNTBURTSxj8yrpHSZHTKBgiaA34n9eDDvYMbGQxuQgg8WhZ5a5BS_JFlqNuSOb_rwDufMFQPDMM5FA"
+  },
+  data: {    
+   uris:["spotify:track:4iV5W9uYEdYUVa79Axb7Rh"]
   }
 };
 
@@ -49,7 +54,8 @@ app.get("/topArtistsSongs", function(req, res) {
             title: track.name,
             id: track.id,
             popularity: track.popularity,
-            singer: track.artists[0].name
+            singer: track.artists[0].name,
+            sample: track.preview_url
           };
         });
         acc = acc.concat(artistTracks);
@@ -61,3 +67,47 @@ app.get("/topArtistsSongs", function(req, res) {
       throw err;
     });
 });
+
+
+
+app.get('/playSong', function (req, res) {
+  const spotConfig = {
+    headers: {
+      Authorization:
+        "Bearer BQA9R4whEHFiZVOZhD5JU786CGtum7pRLTtDHUyS0siRoMxXFQk0SvRbfCW1tBIuGHPT_3C2dcGN-GOkFzMSNiWT4iq3YzmOrKQ5pK2mPnzIOtP3Y3aszRfIKaiSjCxZst4pQMQtochrj8p1cdpZmYhj6AOJr2Jha0TGw3W1x2BqKpExgMT1xKePj4j3pH-fBex596n3OSisaMawBSJGsFMBWPgM1vA8uLOp9L-rP_hylhdHtA-kTVNHFNTBURTSxj8yrpHSZHTKBgiaA34n9eDDvYMbGQxuQgg8WhZ5a5BS_JFlqNuSOb_rwDufMFQPDMM5FA"
+    }
+  };
+
+  const spotData = {    
+    uris:["spotify:track:4iV5W9uYEdYUVa79Axb7Rh"]
+   }
+
+  return axios
+  .put('https://api.spotify.com/v1/me/player/play', spotData, spotConfig)
+  .then (response => {
+    response.send(200)
+  })
+  .catch(err => {
+    console.log(':(', err.message)
+    res.send(500)
+  });
+})
+
+
+function songRandomiser(songsArr) {
+  let random = Math.floor(Math.random() * songs.length)
+  songID = songsArr[random].id
+}
+
+// axios.put('/user', {
+//     firstName: 'Fred',
+//     lastName: 'Flintstone'
+//   })
+//   .then(function (response) {
+//     console.log(response);
+//   })
+//   .catch(function (error) {
+//     console.log(error);
+//   });
+
+//   axios.put(url[, data[, config]])
