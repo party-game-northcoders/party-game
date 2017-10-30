@@ -15,7 +15,7 @@ const spotifyHeaders = {
   headers: {
     Accept: "application/json",
     Authorization:
-      "Bearer BQB9Pdy17mqQIw9u4DyJr1z23OnBjetRZN9Ebfk5XbTeeC6vxFB90N3gvaAkM7VtTZatNZDzUUA3FXLWzXnLXHRvuQXBrbCpgl-qtQMFDn_MDgaDxuRPWfL1559EDyG9FIncFKZD62t0hXE-GzJ8Wpi057E16ivNQr7vIvwi086vTvOxrtNuY4g_TOCGk0hhmXuJh3DIqP-mCOdHEgqwrOdajmO4fcZIs-Nkjho71EmVYAJOb3NhLhDQfLvS443mdipU1x-ZpS6O77w3ZAxcEj6aRhNeW-kS4iXFYOieoploopBB18HyMblQISKkivCjh8P6vg"
+      "Bearer BQCtH6XtoV0poVgHMT_7wXoz_uIe0jKcnAssovxGuWkojWoBMaRgI_fJCEsnkVm62eBuB-bYJlJkYL6uf3b0aXmtiXVO4bjHghdBLqw5p0k4TT7CAgD1xx-gC_xhZSS_B9qd5kDkgYH0jctohJT-ZFW0dd2stIje8Y1mvySDHCuPShdcssdBqQGxI_zVyWHZjkFrrZnrIT38uzPOsDBez8j8SW7mYhkf5DRd4N8LJvAOeij2Ff7rWviilkwD_VYJVy1Ceb7WOfreAD3qdaRHSHo58T8kwSPo3xEJyRypDdc2s80qaasRFLAvcTsLJagkW2rkKQ"
   },
   data: {
     uris: ["spotify:track:4iV5W9uYEdYUVa79Axb7Rh"]
@@ -71,7 +71,7 @@ app.get("/playSong", function(req, res) {
   const spotConfig = {
     headers: {
       Authorization:
-        "Bearer BQB9Pdy17mqQIw9u4DyJr1z23OnBjetRZN9Ebfk5XbTeeC6vxFB90N3gvaAkM7VtTZatNZDzUUA3FXLWzXnLXHRvuQXBrbCpgl-qtQMFDn_MDgaDxuRPWfL1559EDyG9FIncFKZD62t0hXE-GzJ8Wpi057E16ivNQr7vIvwi086vTvOxrtNuY4g_TOCGk0hhmXuJh3DIqP-mCOdHEgqwrOdajmO4fcZIs-Nkjho71EmVYAJOb3NhLhDQfLvS443mdipU1x-ZpS6O77w3ZAxcEj6aRhNeW-kS4iXFYOieoploopBB18HyMblQISKkivCjh8P6vg"
+        "Bearer BQCtH6XtoV0poVgHMT_7wXoz_uIe0jKcnAssovxGuWkojWoBMaRgI_fJCEsnkVm62eBuB-bYJlJkYL6uf3b0aXmtiXVO4bjHghdBLqw5p0k4TT7CAgD1xx-gC_xhZSS_B9qd5kDkgYH0jctohJT-ZFW0dd2stIje8Y1mvySDHCuPShdcssdBqQGxI_zVyWHZjkFrrZnrIT38uzPOsDBez8j8SW7mYhkf5DRd4N8LJvAOeij2Ff7rWviilkwD_VYJVy1Ceb7WOfreAD3qdaRHSHo58T8kwSPo3xEJyRypDdc2s80qaasRFLAvcTsLJagkW2rkKQ"
     }
   };
   return axios
@@ -121,15 +121,20 @@ app.get("/playSong", function(req, res) {
           return axios
             .put(
               "https://api.spotify.com/v1/me/player/seek?position_ms=30000", 
-              {},{
-                headers: {
-                  Authorization:
-                    "Bearer BQB9Pdy17mqQIw9u4DyJr1z23OnBjetRZN9Ebfk5XbTeeC6vxFB90N3gvaAkM7VtTZatNZDzUUA3FXLWzXnLXHRvuQXBrbCpgl-qtQMFDn_MDgaDxuRPWfL1559EDyG9FIncFKZD62t0hXE-GzJ8Wpi057E16ivNQr7vIvwi086vTvOxrtNuY4g_TOCGk0hhmXuJh3DIqP-mCOdHEgqwrOdajmO4fcZIs-Nkjho71EmVYAJOb3NhLhDQfLvS443mdipU1x-ZpS6O77w3ZAxcEj6aRhNeW-kS4iXFYOieoploopBB18HyMblQISKkivCjh8P6vg"
-                }
-              }
+              {}, spotConfig
             )
             .then((response) => {
-              
+              setTimeout(function (){
+
+                return axios
+                .put("https://api.spotify.com/v1/me/player/pause", {}, spotConfig)
+                .then(response => {
+
+                })
+                .catch(err => {
+                  console.log("GOODBYE" + err.message, err);
+                })
+              },12000);
             })
             .catch(err => {
               console.log("HELLO" + err.message, err);
