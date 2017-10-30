@@ -85,11 +85,10 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
         // call spotify function to populate artist and songs array
         // next will go in .then
         fetchArtistNames()
-        .then((artists) => {
-            this.response.speak(artists)
-            this.emitWithState("AskQuestion");
-        })
-        
+        .then((data) => {
+            this.attributes["songChoice"] = data;
+            this.emitWithState("AskQuestion");  
+        }) 
     },
 
     "AskQuestion": function() {
@@ -100,17 +99,19 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
         // gets random object(from data)
         // let random = getRandomSong(0, data.length-1);
         // let song = data[random];
-        let songObj = songRandomiser(songs);
-        fetchsongAPI(songObj.title, songObj.singer).then((data) => {
-            // let propertyArray = Object.getOwnPropertyNames(data.song);
-            let property = "artist";
+        let songObj = songRandomiser(this.attributes["songChoice"]);
+        //fetch lyrics from musixmatch with title and singer from spotify
+        fetchsongAPI(songObj.title, songObj.singer)
+            .then((data) => {
+        
+            let property = "singer";
     
            this.attributes["quizsong"] = data;
            this.attributes["quizproperty"] = property;
            this.attributes["counter"]++;
     
            // property is the key from data
-           let songQuestion = getSong(this.attributes["counter"], property, data.song, data.lyrics);
+           let songQuestion = getSong(this.attributes["counter"], property, data.title, data.lyrics);
            let songGuess = this.attributes["response"] + songQuestion;
     
            this.emit(":ask", songGuess, songQuestion);
@@ -176,27 +177,27 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
 }) 
 
 // gets object in data array
-function fetchSong(slots) {
-    // get keys from data
-    let propertyArray = Object.getOwnPropertyNames(data[0]);
-    let value;
-    for (let slot in slots)
-    {
-        if (slots[slot].value !== undefined)
-        {
-            value = slots[slot].value;
-            for (let property in propertyArray)
-            {
-                let song = data.filter(x => x[propertyArray[property]].toString().toLowerCase() === slots[slot].value.toString().toLowerCase());
-                if (song.length > 0)
-                {
-                    return song[0];
-                }
-            }
-        }
-    }
-    return value;
-}
+// function fetchSong(slots,data) {
+//     // get keys from data
+//     let propertyArray = Object.getOwnPropertyNames(data[0]);
+//     let value;
+//     for (let slot in slots)
+//     {
+//         if (slots[slot].value !== undefined)
+//         {
+//             value = slots[slot].value;
+//             for (let property in propertyArray)
+//             {
+//                 let song = data.filter(x => x[propertyArray[property]].toString().toLowerCase() === slots[slot].value.toString().toLowerCase());
+//                 if (song.length > 0)
+//                 {
+//                     return song[0];
+//                 }
+//             }
+//         }
+//     }
+//     return value;
+// }
 
 // function defining song that alexa uses for question
 function getSong(counter, property, song, lyrics) {
@@ -205,7 +206,7 @@ function getSong(counter, property, song, lyrics) {
 
 // returns the answer after allocated time.
 function getAnswer(property, song) {
-return "The song was " + song.song + "bye " + song[property];
+return "The song was " + song.title + "bye " + song[property];
 }
 
 function getRandomSong (startNum, endNum) {
@@ -243,8 +244,8 @@ exports.handler = (event, context, callback) => {
 function songRandomiser(arr) {
     let random = Math.floor(Math.random() * arr.length);
     let songObj = {
-        title: arr[random].song,
-        singer: arr[random].artist
+        title: arr[random].title,
+        singer: arr[random].singer
     }
     return songObj;
     
@@ -258,146 +259,63 @@ function fetchsongAPI(title, singer) {
         let lyricsArray = lyrics.split("\n");
         let lyricsOutput = lyricsArray.slice(0, 3).join(". ")+".";
         let data = {
-            song: title,
-            artist: singer,
+            title: title,
+            singer: singer,
             lyrics: lyricsOutput
         };
         return data;
     })
 }
-
+// This fetches artist names from spotify to use for fetchsongAPI (musix match) function
 function fetchArtistNames() {
     let songArr =[];
 
     const spotifyHeaders = {
         headers: {
             Accept: 'application/json',
-            Authorization:"Bearer BQA6fQjcUuI6PIVwRDZmG0tt-N411ZWapsc6SzbNf-COQRKjsUJu7O9AmuFt9TnbeJDm_hTgiJWPj1NGXCb27dDbH4YHoG9109ejD1LDsVvA4QNqzkmjYvLhcGLfLB8njgjv1FqcqZToBjuaPB4gFb2Y9PQ4SZTmJBVeFZK2GkGBk4vf_VmjLlPuGFQeh2_or123RlrR91oZG06BPN7-n3flX6J05thKou2rB84nkAHmI9-4aY56QnkePWdiV2GGNfks0osIMUGqCwuGAyyyKT9Jnh8zcaW1bdGo4rj6bstWBGOsJ9dhjiUFEc_zOvKTNEbF5Q"
+            Authorization:"Bearer BQBtRPZbUqSOFv4lRHRfX-nfyEei6ef_yBd9MF5B1qoHyVdz8n9vM3Zu7lS5teiy_Bzv07ikM5ke_SZkZwp_TL0sVnz97CU5n7yfZHjqYUB0NuHruY9tXTf3cWnc5xqBjQmhT3FDoDHGCgZxfODD1TSN2rQ2FPJAQ7s6RAPYJlpSKOWFDtg0hW8I_aoh_x0sUIrPH82_lLBfwWdmc-TJFtX9PtqV2R0OiF50AjqYwfUcoxny6ZxkfiWY1KgCnL3j376savACyWL8BCjsBAtlCpbggb1_mqA6_S8_s-Qrqmd4Z0uPSq9Em4k8x_WiRFcXvK-O5g"
         }  
     };
     return axios.get("https://api.spotify.com/v1/me/top/artists", spotifyHeaders) 
     .then((response)=>{
         response.data.items.map(function (artist) {
         songArr.push({
-                name: artist.name, 
+                singer: artist.name, 
                 id: artist.id, 
                 popularity:artist.popularity
             })
         })
         return songArr;
     })
-    .catch((err) => {
+    // This fetches artist song from spotify to use for fetchsongAPI (musix match) function
+    .then(artists => {
+        artists.sort((a, b) => b.popularity - a.popularity);
+        const artistRequests = artists.map(artist => {
+          return axios.get(
+            `https://api.spotify.com/v1/artists/${artist.id}/top-tracks?country=GB`,
+            spotifyHeaders
+          );
+        });
+        return Promise.all(artistRequests);
+      })
+      .then(resolvedArtists => {
+        const data = resolvedArtists.reduce((acc, artistArr) => {
+          const artistTracks = artistArr.data.tracks.map(track => {
+            return {
+              title: track.name,
+              id: track.id,
+              popularity: track.popularity,
+              singer: track.artists[0].name
+            };
+          });
+          acc = acc.concat(artistTracks);
+          return acc;
+        }, []);
+        return data;
+      })
+      .catch(err => {
         throw err;
-    })
-}
+      });
 
-const songs = [
-    {
-        artist: "Beyoncé", 
-        song: "Halo"
-    }, 
-    {
-        artist: "David Bowie",
-        song: "Space Oddity"
-    },
-    {
-        artist: "Taylor Swift",
-        song: "Shake It Off"
-    },
-    {
-        artist: "Take That",
-        song: "Rule the World"
-    },
-    {
-        artist: "LMFAO",
-        song: "Rock the World"
-    },
-    {
-        artist: "The Beatles",
-        song: "Hey Jude"
-    },
-    {
-        artist: "Diana Ross and Lionel Ritchie", 
-        song: "Endless Love"
-    },
-    {
-        artist: "Bryan Adams",
-        song: "(Everything I Do) I Do It For You"
-    },
-    {
-        artist: "Adele",
-        song: "Rolling In The Deep"
-    },
-    {
-        artist: "Frank Sinatra",
-        song: "New York, New York"
-    },
-    {
-        artist: "Madonna",
-        song: "Music"
-    },
-    {
-        artist: "Elvis",
-        song: "Jailhouse Rock"
-    },
-    {
-        artist: "Cher",
-        song: "Believe"
-    },
-    {
-        artist: "Irene Carr",
-        song: "Fame"
-    },
-    {
-        artist: "Ricky Martin",
-        song: "Livin' La Vida Loca"
-    },
-    {
-        artist: "Nirvana",
-        song: "Smells Like Teen Spirit"
-    },
-    {
-        artist: "Aerosmith",
-        song: "Walk This Way"
-    },
-    {
-        artist: "Spice Girls",
-        song: "Wannabe"
-    },
-    {
-        artist: "Michael Jackson",
-        song: "Thriller"
-    },
-    {
-        artist: "Public Enemy",
-        song: "Don't Believe The Hype"
-    },
-    {
-        artist: "Beastie Boys",
-        song: "Fight For Your Right"
-    },
-    {
-        artist: "Bob Dylan",
-        song: "Subterranean Homesick Blues"
-    },
-    {
-        artist: "Britney Spears",
-        song: "Oops!...I Did It Again"
-    },
-    {
-        artist: "Drake",
-        song: "Hold On We're Going Home"
-    },
-    {
-        artist: "Calvin Harris",
-        song: "Summer"
-    },
-    {
-        artist: "Amerie",
-        song: "One Thing"
-    },
-    {
-        artist: "50 Cent",
-        song: "P.I.M.P"
-    }
-];
+
+    };
