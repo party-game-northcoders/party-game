@@ -1,17 +1,17 @@
 "use strict";
-
-const bodyParser = require("body-parser");
 const axios = require('axios');
-
 var Alexa = require("alexa-sdk");
 
 var APP_ID = undefined;
 
 const counter = 0;
 
+let url = "https://p.scdn.co/mp3-preview/4ab65f9b193ccc37f2059344322462ae5e9dac90?cid=8897482848704f2a8f8d7c79726a70d4"
+
 const states = {
     START: "_START",
-    QUIZ: "_QUIZ"
+    QUIZ: "_QUIZ",
+    MUSIC: "_MUSIC"
 }
 
 const handlers = {
@@ -22,6 +22,10 @@ const handlers = {
     "QuizIntent": function() {
         this.handler.state = states.QUIZ;
         this.emitWithState("Quiz");
+    },
+    "MusicIntent": function () {
+        this.handler.state = states.MUSIC;
+        this.emitWithState("Music");
     },
     "AnswerIntent": function() {
         this.handler.state = states.START;
@@ -37,10 +41,13 @@ const handlers = {
     }
 }
 
-const START_GAME_MESSAGE = "Hey party people! When you're ready to play, say start quiz. ";
+const START_GAME_MESSAGE = "Hey party people! When you're ready to play, say start quiz or play song. ";
 const HELP_MESSAGE = "Please say start quiz to begin the music quiz. ";
 const GAME_END_MESSAGE = "Goodbye";
 const START_QUIZ_MESSAGE = "I will ask you to name 5 songs. ";
+const START_SONG_MESSAGE = "Song will start in 5. 4. 3. 2. 1. ";
+const PAUSE_MESSAGE = "Please say continue to resume song";
+
 
 function getSarcyComment (type) {
     let speechCon = "";
@@ -48,8 +55,9 @@ function getSarcyComment (type) {
     else return "<say-as interpret-as='interjection'>" + sarcyCommentsIncorrect[getRandomSong(0, sarcyCommentsIncorrect.length-1)] + " </say-as><break strength='strong'/>";
 }
 
-const sarcyCommentsCorrect = ["Well done!", "Smarty pants"];
-const sarcyCommentsIncorrect = ["As if!", "Seriously?"];
+const sarcyCommentsCorrect = ["Well done!. ", "Smarty pants. "];
+const sarcyCommentsIncorrect = ["As if!. ", "Seriously?. "];
+
 
 const startHandlers = Alexa.CreateStateHandler(states.START, {
     "Start": function() {
@@ -59,6 +67,10 @@ const startHandlers = Alexa.CreateStateHandler(states.START, {
     "QuizIntent": function() {
         this.handler.state = states.QUIZ;
         this.emitWithState("Quiz");
+    },
+    "MusicIntent": function () {
+        this.handler.state = states.MUSIC;
+        this.emitWithState("Music");
     },
     "AMAZON.StopIntent": function() {
         this.response.speak(GAME_END_MESSAGE);
@@ -171,33 +183,15 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
         this.response.speak(HELP_MESSAGE).listen(HELP_MESSAGE);
         this.emit(":responseReady");
     },
+    "AMAZON.PauseIntent": function() {
+        this.response.speak(PAUSE_MESSAGE).listen(PAUSE_MESSAGE);
+        this.emit(":responseReady");
+    },
     "Unhandled": function() {
-        this.emitWithState("AnswerIntent");
+        this.emitWithState("responseReady");
     }
 }) 
 
-// gets object in data array
-// function fetchSong(slots,data) {
-//     // get keys from data
-//     let propertyArray = Object.getOwnPropertyNames(data[0]);
-//     let value;
-//     for (let slot in slots)
-//     {
-//         if (slots[slot].value !== undefined)
-//         {
-//             value = slots[slot].value;
-//             for (let property in propertyArray)
-//             {
-//                 let song = data.filter(x => x[propertyArray[property]].toString().toLowerCase() === slots[slot].value.toString().toLowerCase());
-//                 if (song.length > 0)
-//                 {
-//                     return song[0];
-//                 }
-//             }
-//         }
-//     }
-//     return value;
-// }
 
 // function defining song that alexa uses for question
 function getSong(counter, property, song, lyrics) {
@@ -206,7 +200,7 @@ function getSong(counter, property, song, lyrics) {
 
 // returns the answer after allocated time.
 function getAnswer(property, song) {
-return "The song was " + song.title + "bye " + song[property];
+return " The song was " + song.title + " bye " + song[property] + ". ";
 }
 
 function getRandomSong (startNum, endNum) {
@@ -225,20 +219,12 @@ function compareSlots(slots, value) {
 }
 
 function getCurrentScore (score, counter) {
-    return "Good lord, your current score is " + score + " out of " + counter + ". ";
- //return "Your current score is " + score + " out of " + counter + ". "; }
+    return "Your current score is " + score + " out of " + counter + ". ";
 }
 
 function getFinalScore (score, counter) {
-    return "Bloody hell, you scored " + score + " out of " + counter + ". ";
+    return "You scored " + score + " out of " + counter + ". ";
 }
-
-exports.handler = (event, context, callback) => {
-    const alexa = Alexa.handler(event, context,callback);
-    alexa.appId = APP_ID;
-    alexa.registerHandlers(handlers, startHandlers, quizHandlers);
-    alexa.execute();
-};
 
 // randomly gets artist and song for fetch request
 function songRandomiser(arr) {
@@ -248,7 +234,6 @@ function songRandomiser(arr) {
         singer: arr[random].singer
     }
     return songObj;
-    
 }
 
 function fetchsongAPI(title, singer) {
@@ -273,7 +258,7 @@ function fetchArtistNames() {
     const spotifyHeaders = {
         headers: {
             Accept: 'application/json',
-            Authorization:"Bearer BQBtRPZbUqSOFv4lRHRfX-nfyEei6ef_yBd9MF5B1qoHyVdz8n9vM3Zu7lS5teiy_Bzv07ikM5ke_SZkZwp_TL0sVnz97CU5n7yfZHjqYUB0NuHruY9tXTf3cWnc5xqBjQmhT3FDoDHGCgZxfODD1TSN2rQ2FPJAQ7s6RAPYJlpSKOWFDtg0hW8I_aoh_x0sUIrPH82_lLBfwWdmc-TJFtX9PtqV2R0OiF50AjqYwfUcoxny6ZxkfiWY1KgCnL3j376savACyWL8BCjsBAtlCpbggb1_mqA6_S8_s-Qrqmd4Z0uPSq9Em4k8x_WiRFcXvK-O5g"
+            Authorization:"Bearer BQDKM9MRjllc4tLlR8is5o6IlZYWOTih7vP4cHnQx9ZGd826n88V8KnvIlnUdVLhthQte50RH9fs_OXKuEEmK2ZTohcHE1dPZEZF_B1TtlGfXLHn1K9CcTmHe2ek-o8vo10cal2ehLrVcWnMTOAfBvtGLIsGVdS_Axw-PU3b6W513EvLmlpQtnQqgtJCauZQCoKiNgj41hN-IhYtY9bcPXZzdDPAg4nJcphU-U1aY2Tc6h5NTiyhiGf2-PLGlnk0rCZ_5VR53nVoILiqfz_vkHuBznLiJ4FypXWUdRr33yfpNGsAiND9QhPyTz5HtlgwUOZgTA"
         }  
     };
     return axios.get("https://api.spotify.com/v1/me/top/artists", spotifyHeaders) 
@@ -317,5 +302,19 @@ function fetchArtistNames() {
         throw err;
       });
 
+    
+    // fetch spotify URL using trackId
+    function fetchSpotifyURL() {
+        let audioData = "https://p.scdn.co/mp3-preview/4ab65f9b193ccc37f2059344322462ae5e9dac90?cid=8897482848704f2a8f8d7c79726a70d4";
+        return audioData;
+    };
 
+    function playTheSong () {
+        this.response.audioPlayerPlay('REPLACE_ALL', url, url, null, 0);
+    }
+    exports.handler = (event, context, callback) => {
+        const alexa = Alexa.handler(event, context,callback);
+        alexa.appId = APP_ID;
+        alexa.registerHandlers(handlers, startHandlers, quizHandlers, audioEventHandlers);
+        alexa.execute();
     };
