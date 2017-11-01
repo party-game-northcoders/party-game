@@ -7,8 +7,6 @@ var APP_ID = undefined;
 
 const counter = 0;
 
-//let url = "https://p.scdn.co/mp3-preview/4ab65f9b193ccc37f2059344322462ae5e9dac90?cid=8897482848704f2a8f8d7c79726a70d4"
-
 const states = {
     START: "_START",
     QUIZ: "_QUIZ",
@@ -47,19 +45,16 @@ const handlers = {
     },
     "Unhandled": function() {
         this.handler.state = states.START;
-        this.emitWithState("AnswerIntent");
-    },
-    "SessionEndedRequest" : function () {
-        this.emitWithState("AnswerIntent");
+        this.emitWithState("Start");
     }
 }
 
-const START_GAME_MESSAGE = "Hey party people! When you're ready to play, say start quiz. or. play song. or. play spotify. ";
-const HELP_MESSAGE = "Please say start quiz to begin the music quiz. ";
-const GAME_END_MESSAGE = "Goodbye";
-const START_QUIZ_MESSAGE = "I will ask you to name 5 songs. ";
-const START_SONG_MESSAGE = "Song will start in 5. 4. 3. 2. 1. ";
-const PAUSE_MESSAGE = "Please say continue to resume song";
+const START_GAME_MESSAGE = "Hey party people! When you're ready to play, say. start lyrics quiz. or. start music quiz . or. start party playlist. ";
+const HELP_MESSAGE = "Please say . start lyrics quiz. or start music quiz. to begin the music quiz. or say start party playlist";
+const GAME_END_MESSAGE = "You're shit. Goodbye";
+const START_QUIZ_MESSAGE = "I will play 5 songs, and after each song I will ask you to name the artist. ";
+const PLAY_MUSIC_MESSAGE = "The song will play in 5. 4. 3. 2. 1. "
+const PAUSE_MESSAGE = "Please say continue to resume song. ";
 
 
 function getSarcyComment (type) {
@@ -107,66 +102,57 @@ const startHandlers = Alexa.CreateStateHandler(states.START, {
 })
 const spotifyHandlers = Alexa.CreateStateHandler(states.SPOTIFY,{
     "Spotify": function() {
-       
-        PlaySpotifySong()
-        .then((data) => {
-            // this.attributes["songChoice"] = data;
-            
-            
-        // let songObj = songRandomiser(this.attributes["songChoice"]);
-
-        // SpotifyPlaySong(songObj)
-        // .then (( ) => {
-            const speechOutput = '<amazon:effect name="whispered">I am not a real human. . . . . . . . . . . . . . . . . . . . . </amazon:effect>' ;
-            this.response.speak(speechOutput)
-            this.emit(":responseReady");
-            // })
-        })
-    }
-
-})
-const musicHandlers = Alexa.CreateStateHandler(states.MUSIC,{
-    "Music": function() {
         this.attributes["response"] = "";
         this.attributes["counter"] = 0;
         this.attributes["quizscore"] = 0;
-        
-        this.emitWithState("AskMusic");  
-
+        // call spotify function to populate artist and songs array
+        // next will go in .then
+        fetchArtistNames()
+        .then((data) => {
+            this.attributes["songChoice"] = data;
+            this.emitWithState("AskSpotifyQuestion");
+        }) 
     },
-
-    "AskMusic": function() {
+    "AskSpotifyQuestion": function () {
         if (this.attributes["counter"] == 0) {
-            this.attributes["response"] = " ";
-        }
-        // SongObj is just one object of audio data with mp3 file, name and title.
-       // let songObj = songRandomiser(songAudio.songAudio);
-       let songObj = songAudio.songAudio[0];
+            this.attributes["response"] = START_QUIZ_MESSAGE + " ";
+            let songObj = songRandomiser(this.attributes["songChoice"]);
+            let property = "singer";
         
+               this.attributes["quizsong"] = songObj;
+               this.attributes["quizproperty"] = property;
+               this.attributes["counter"]++;
+        
+               let songQuestion = getQuestion(this.attributes["counter"], property, songObj.title);
+               let songGuess = this.attributes["response"];
+                // asks the question after song is played.
+               this.emit(":ask", songQuestion, PlaySpotifySong(songObj).then(() => {
+                songGuess
+               }))
+        }
+    else {
+        let songObj = songRandomiser(this.attributes["songChoice"]);
         let property = "singer";
     
            this.attributes["quizsong"] = songObj;
            this.attributes["quizproperty"] = property;
            this.attributes["counter"]++;
-    
-        // ask the question with audio clip 
-           let songQuestion = playMP3Song(this.attributes["counter"], songObj.audio);
-           
-            this.emit(":ask",songQuestion);
-        //    setTimeout(() => {
-        //        let songGuess = this.attributes["response"] + songQuestion;
+            
+           let songQuestion = getQuestion(this.attributes["counter"], property, songObj.title);
+           let songGuess = this.attributes["response"];
+            // asks the question after song is played.
+           this.emit(":ask", songGuess, PlaySpotifySong(songObj).then(() => {
+            songQuestion
+           }))
+    }
         
-        //        this.emit(":ask", songGuess, songQuestion);
-
-        //    }, 1900)
     },
     "AnswerMusicIntent": function() {
         let response = "";
         let speechOutput = "";
         let data = this.attributes["quizsong"];
         let property = this.attributes["quizproperty"]
-    
-
+        
         let correct = compareSlots(this.event.request.intent.slots, data[property]);
         
         if (correct) {
@@ -182,7 +168,7 @@ const musicHandlers = Alexa.CreateStateHandler(states.MUSIC,{
         if (this.attributes["counter"] < 5) {
             response += getCurrentScore(this.attributes["quizscore"], this.attributes["counter"]);
             this.attributes["response"] = response;
-            this.emitWithState("AskQuestion");
+            this.emitWithState("AskSpotifyQuestion");
         }
         else {
             response += getFinalScore(this.attributes["quizscore"], this.attributes["counter"]);
@@ -191,6 +177,42 @@ const musicHandlers = Alexa.CreateStateHandler(states.MUSIC,{
             this.response.speak(speechOutput);
             this.emit(":responseReady");
         }
+    },
+    "AMAZON.RepeatIntent": function() {
+        let song = getSong(this.attributes["counter"], this.attributes["quizproperty"], this.attributes["quizsong"]);
+        this.response.speak(song).listen(song);
+        this.emit(":responseReady");
+    },
+    "AMAZON.StartOverIntent": function() {
+        this.emitWithState("Quiz");
+    },
+    "AMAZON.StopIntent": function() {
+        this.response.speak(GAME_END_MESSAGE);
+        this.emit(":responseReady");
+    },
+    "AMAZON.CancelIntent": function() {
+        this.response.speak(GAME_END_MESSAGE);
+        this.emit(":responseReady");
+    },
+    "AMAZON.HelpIntent": function() {
+        this.response.speak(HELP_MESSAGE).listen(HELP_MESSAGE);
+        this.emit(":responseReady");
+    },
+    "AMAZON.PauseIntent": function() {
+        this.response.speak(PAUSE_MESSAGE).listen(PAUSE_MESSAGE);
+        this.emit(":responseReady");
+    },
+    "Unhandled": function() {
+        this.emitWithState("AnswerMusicIntent");
+    }
+
+})
+const musicHandlers = Alexa.CreateStateHandler(states.MUSIC,{
+    "Music": function() {
+       
+        
+        this.emit(":responseReady");  
+
     },
     "AMAZON.RepeatIntent": function() {
         let song = getSong(this.attributes["counter"], this.attributes["quizproperty"], this.attributes["quizsong"]);
@@ -215,12 +237,6 @@ const musicHandlers = Alexa.CreateStateHandler(states.MUSIC,{
     "AMAZON.PauseIntent": function() {
         this.response.speak(PAUSE_MESSAGE).listen(PAUSE_MESSAGE);
         this.emit(":responseReady");
-    },
-    "Unhandled": function() {
-        this.emitWithState("AnswerMusicIntent");
-    },
-    "SessionEndedRequest" : function () {
-        this.emitWithState("AnswerMusicIntent");
     }
 }) 
 
@@ -237,15 +253,11 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
             this.emitWithState("AskQuestion");  
         }) 
     },
-
     "AskQuestion": function() {
         if (this.attributes["counter"] == 0) {
             this.attributes["response"] = START_QUIZ_MESSAGE + " ";
         }
         
-        // gets random object(from data)
-        // let random = getRandomSong(0, data.length-1);
-        // let song = data[random];
         let songObj = songRandomiser(this.attributes["songChoice"]);
         //fetch lyrics from musixmatch with title and singer from spotify
         fetchsongAPI(songObj.title, songObj.singer)
@@ -258,7 +270,7 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
            this.attributes["counter"]++;
     
            // property is the key from data
-           let songQuestion = getSong(this.attributes["counter"], property, data.title, data.lyrics);
+           let songQuestion = getSong(this.attributes["counter"], data.lyrics);
            let songGuess = this.attributes["response"] + songQuestion;
     
            this.emit(":ask", songGuess, songQuestion);
@@ -324,24 +336,17 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
     },
     "Unhandled": function() {
         this.emitWithState("AnswerIntent");
-    },
-    "SessionEndedRequest" : function () {
-        this.emitWithState("AnswerIntent");
     }
 }) 
 
 
 // function defining song that alexa uses for question
-function getSong(counter, property, song, lyrics) {
+function getSong(counter, lyrics) {
     return "Here is song number " + counter + ". Name the artist. The song is coming in 5. 4. 3. 2. 1. " + lyrics;    
 }
 
-function playMP3Song(counter, audio) {
-    return `
-        Here is song number 1. 
-        Name the artist. The song is coming in 5. 4. 3. 2. 1.
-        <audio src="https://s3-eu-west-1.amazonaws.com/musicappforproject/converted.mp3" />
-    `;    
+function getQuestion(counter) {
+    return "Name the artist. "
 }
 
 // returns the answer after allocated time.
@@ -377,7 +382,8 @@ function songRandomiser(arr) {
     let random = Math.floor(Math.random() * arr.length);
     let songObj = {
         title: arr[random].title,
-        singer: arr[random].singer
+        singer: arr[random].singer,
+        id: arr[random].id
     }
     return songObj;
 }
@@ -404,7 +410,7 @@ function fetchArtistNames() {
     const spotifyHeaders = {
         headers: {
             Accept: 'application/json',
-            Authorization:"Bearer BQAMQdlobUzrZ4DnpHpS99mJtB1_kAMA7g27si0o9YzjKrEEKj8dkfgKyR8SRkaonqHmJ2eReUIt34mJr51SLJZANuVk8sShSCWDZCQeBQSfQ0KrBvs-NejOavmZYsAhigTLx3qTUjCtINlaf6uglB-Gh6S92OXf0S09mjzDL1HUDAxmFBzEB9NbgXYk8NUrIOi2Ede6Yue1cViKg_XjPTmtAZYzzCcEE19NpD2Hx5Y7m4sXG-0UqWAdGmj1JYUtIN9zQOidKIFqWPf61_myu1oJjr1b2bh-_hY57NQ_pLOFMOjRY7d11Far9j24v0kQNDJ0rw"
+            Authorization:"Bearer BQBdnfi0UovCbRtqgsfJLyDc2T4DxBpHZIYl87_BlbX_HkZI_7td0JFKOrSqzsYRZJH70f19EUZjzuzgH-m2HM07ljbzfRA_YjiG9YcJwLHfOLlWeRJIZ4gU5_TkUTWd2C8jNX_OyUjUmzUwoCSj3rp9Dg33QlH5-uMDRZ4Jy2VJvySGYd56ZM4DN4Iepz_43Uc5IB49ZlKwtubh83DbzZEARat-XBZXKLTMk3Xmn96Vmc92TFRPIaLI6xRbO9FOUS40r8FejyjM5VBuK0i10KaxQH-4KA6z7y2OOAZ-GIZRViIX8qpyG48Qjq-r-VHpbOAurw"
         }  
     };
     return axios.get("https://api.spotify.com/v1/me/top/artists", spotifyHeaders) 
@@ -429,7 +435,7 @@ function fetchArtistNames() {
         });
         return Promise.all(artistRequests);
       })
-      .then(resolvedArtists => {
+    .then(resolvedArtists => {
         const data = resolvedArtists.reduce((acc, artistArr) => {
           const artistTracks = artistArr.data.tracks.map(track => {
             return {
@@ -444,66 +450,22 @@ function fetchArtistNames() {
         }, []);
         return data
     })
-        .catch(err => {
+    .catch(err => {
             throw err;
           });
-        }
+}
 
-        function PlaySpotifySong() {
-            let songArr =[];
-        
-            const spotifyHeaders = {
-                headers: {
-                    Accept: 'application/json',
-                    Authorization:"Bearer BQAMQdlobUzrZ4DnpHpS99mJtB1_kAMA7g27si0o9YzjKrEEKj8dkfgKyR8SRkaonqHmJ2eReUIt34mJr51SLJZANuVk8sShSCWDZCQeBQSfQ0KrBvs-NejOavmZYsAhigTLx3qTUjCtINlaf6uglB-Gh6S92OXf0S09mjzDL1HUDAxmFBzEB9NbgXYk8NUrIOi2Ede6Yue1cViKg_XjPTmtAZYzzCcEE19NpD2Hx5Y7m4sXG-0UqWAdGmj1JYUtIN9zQOidKIFqWPf61_myu1oJjr1b2bh-_hY57NQ_pLOFMOjRY7d11Far9j24v0kQNDJ0rw"
-                }  
-            };
-            return axios.get("https://api.spotify.com/v1/me/top/artists", spotifyHeaders) 
-            .then((response)=>{
-                response.data.items.map(function (artist) {
-                songArr.push({
-                        singer: artist.name, 
-                        id: artist.id, 
-                        popularity:artist.popularity
-                    })
-                })
-                return songArr;
-            })
-            // This fetches artist song from spotify to use for fetchsongAPI (musix match) function
-            .then(artists => {
-                artists.sort((a, b) => b.popularity - a.popularity);
-                const artistRequests = artists.map(artist => {
-                  return axios.get(
-                    `https://api.spotify.com/v1/artists/${artist.id}/top-tracks?country=GB`,
-                    spotifyHeaders
-                  );
-                });
-                return Promise.all(artistRequests);
-              })
-              .then(resolvedArtists => {
-                const data = resolvedArtists.reduce((acc, artistArr) => {
-                  const artistTracks = artistArr.data.tracks.map(track => {
-                    return {
-                      title: track.name,
-                      id: track.id,
-                      popularity: track.popularity,
-                      singer: track.artists[0].name
-                    };
-                  });
-                  acc = acc.concat(artistTracks);
-                  return acc;
-                }, []);
-        let random = Math.floor(Math.random() * data.length);
+    function PlaySpotifySong(song) {
         const spotConfig = {
             headers: {
               Authorization:
-                "Bearer BQAMQdlobUzrZ4DnpHpS99mJtB1_kAMA7g27si0o9YzjKrEEKj8dkfgKyR8SRkaonqHmJ2eReUIt34mJr51SLJZANuVk8sShSCWDZCQeBQSfQ0KrBvs-NejOavmZYsAhigTLx3qTUjCtINlaf6uglB-Gh6S92OXf0S09mjzDL1HUDAxmFBzEB9NbgXYk8NUrIOi2Ede6Yue1cViKg_XjPTmtAZYzzCcEE19NpD2Hx5Y7m4sXG-0UqWAdGmj1JYUtIN9zQOidKIFqWPf61_myu1oJjr1b2bh-_hY57NQ_pLOFMOjRY7d11Far9j24v0kQNDJ0rw"
+                "Bearer BQBdnfi0UovCbRtqgsfJLyDc2T4DxBpHZIYl87_BlbX_HkZI_7td0JFKOrSqzsYRZJH70f19EUZjzuzgH-m2HM07ljbzfRA_YjiG9YcJwLHfOLlWeRJIZ4gU5_TkUTWd2C8jNX_OyUjUmzUwoCSj3rp9Dg33QlH5-uMDRZ4Jy2VJvySGYd56ZM4DN4Iepz_43Uc5IB49ZlKwtubh83DbzZEARat-XBZXKLTMk3Xmn96Vmc92TFRPIaLI6xRbO9FOUS40r8FejyjM5VBuK0i10KaxQH-4KA6z7y2OOAZ-GIZRViIX8qpyG48Qjq-r-VHpbOAurw"
             }
           }
           return axios
                 .put(
                   "https://api.spotify.com/v1/me/player/play",
-                  { uris: ["spotify:track:" + data[random].id] },
+                  { uris: ["spotify:track:" + song.id] },
                   spotConfig
                 )
                 .then((response) => {
@@ -513,81 +475,18 @@ function fetchArtistNames() {
                       {}, spotConfig
                     )
                     .then((response) => {
-                      setTimeout(function (){
-        
+                      setTimeout(function () {
                         return axios
                         .put("https://api.spotify.com/v1/me/player/pause", {}, spotConfig)
                         .then(response => {
-                          
                         })
-                        // .catch(err => {
-                        //   console.log("GOODBYE" + err.message, err);
-                        // })
-                      },12000);
+                      }, 12000);
                     })
-                    // .catch(err => {
-                    //   console.log("HELLO" + err.message, err);
-                    // })
                 })
                 .catch(err => {
                   console.log(err.message);
                 });
-      })
-      .catch(err => {
-        throw err;
-      });
     }
-    
-    // // fetch spotify URL using trackId
-    // function fetchSpotifyURL() {
-    //     let audioData = "https://p.scdn.co/mp3-preview/4ab65f9b193ccc37f2059344322462ae5e9dac90?cid=8897482848704f2a8f8d7c79726a70d4";
-    //     return audioData;
-    // };
-
-    // play song via spotify
-
-    // function SpotifyPlaySong (data) {
-    
-    //     const spotConfig = {
-    //       headers: {
-    //         Authorization:
-    //           "Bearer BQAMQdlobUzrZ4DnpHpS99mJtB1_kAMA7g27si0o9YzjKrEEKj8dkfgKyR8SRkaonqHmJ2eReUIt34mJr51SLJZANuVk8sShSCWDZCQeBQSfQ0KrBvs-NejOavmZYsAhigTLx3qTUjCtINlaf6uglB-Gh6S92OXf0S09mjzDL1HUDAxmFBzEB9NbgXYk8NUrIOi2Ede6Yue1cViKg_XjPTmtAZYzzCcEE19NpD2Hx5Y7m4sXG-0UqWAdGmj1JYUtIN9zQOidKIFqWPf61_myu1oJjr1b2bh-_hY57NQ_pLOFMOjRY7d11Far9j24v0kQNDJ0rw"
-    //       }
-    //     }
-        
-    //         return axios
-    //           .put(
-    //             "https://api.spotify.com/v1/me/player/play",
-    //             { uris: ["spotify:track:" + data.id] },
-    //             spotConfig
-    //           )
-    //           .then((response) => {
-    //             return axios
-    //               .put(
-    //                 "https://api.spotify.com/v1/me/player/seek?position_ms=30000", 
-    //                 {}, spotConfig
-    //               )
-    //               .then((response) => {
-    //                 setTimeout(function (){
-      
-    //                   return axios
-    //                   .put("https://api.spotify.com/v1/me/player/pause", {}, spotConfig)
-    //                   .then(response => {
-    //                     return response
-    //                   })
-    //                   .catch(err => {
-    //                     console.log("GOODBYE" + err.message, err);
-    //                   })
-    //                 },12000);
-    //               })
-    //               .catch(err => {
-    //                 console.log("HELLO" + err.message, err);
-    //               })
-    //           })
-    //           .catch(err => {
-    //             console.log(err.message);
-    //           });
-    // }  
 
     exports.handler = (event, context, callback) => {
         const alexa = Alexa.handler(event, context,callback);
