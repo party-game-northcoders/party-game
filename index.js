@@ -57,7 +57,7 @@ const START_GAME_MESSAGE = "Hey party people! When you're ready to play, say. st
 const HELP_MESSAGE = "Please say . start lyrics quiz. or start music quiz. to begin the music quiz. or say start party playlist";
 const GAME_END_MESSAGE = "You're shit. Goodbye";
 const START_QUIZ_MESSAGE = "I will play 5 songs, and after each song I will ask you to name the artist. ";
-const PLAY_MUSIC_MESSAGE = "The song will play in 5. 4. 3. 2. 1. "
+const PLAY_MUSIC_MESSAGE = "The song will play in 3. 2. 1. "
 const PAUSE_MESSAGE = "Please say continue to resume song. ";
 
 
@@ -113,49 +113,34 @@ const spotifyHandlers = Alexa.CreateStateHandler(states.SPOTIFY,{
         // next will go in .then
         fetchArtistNames()
         .then((data) => {
-            this.attributes["songChoice"] = data;
+            var newdata = data.concat(classicSongArr);
+            console.log(newdata)
+            this.attributes["songChoice"] = newdata;
             this.emitWithState("AskSpotifyQuestion");
         }) 
     },
     "AskSpotifyQuestion": function () {
         if (this.attributes["counter"] == 0) {
             this.attributes["response"] = START_QUIZ_MESSAGE + " ";
-        }
-        // this.attributes["quizsong"] = songObj;
-        // this.attributes["quizproperty"] = property;
-
-        let prevScore = this.attributes["response"] + "Are you ready to play?";
-
+        };
+        let prevScore = this.attributes["response"] + "Are you ready to play? ";
         this.emit(":ask", prevScore)
     },
     
     "ReadyToPlayIntent" : function () {
         let songObj = songRandomiser(this.attributes["songChoice"]);
+        console.log(songObj)
         let property = "singer";
     
            this.attributes["quizsong"] = songObj;
            this.attributes["quizproperty"] = property;
            this.attributes["counter"]++;
             
-        //    let songQuestion = getQuestion(songObj).then(()=> {
-        // },20000);
-        PlaySpotifySong (songObj)
+        PlaySpotifySong(songObj)
             .then (() => {
                 let question = getQuestion() 
                 this.emit(":ask", question, question)
-            })
-        
-        // getQuestion(songObj).then((songQuestion)=> {
-        //     console.log(songQuestion)
-        //     let songGuess = this.attributes["response"] + songQuestion ;
-        //     console.log(songGuess)
-        //     this.emit(":ask", songGuess, songGuess)
-        //  });
-        //    let songGuess = this.attributes["response"] + songQuestion;
-        //     // asks the question after song is played.
-        //    this.emit(":ask", songGuess, songQuestion)
-    
-        
+            });        
     },
 
     "AnswerMusicIntent": function() {
@@ -221,10 +206,7 @@ const spotifyHandlers = Alexa.CreateStateHandler(states.SPOTIFY,{
 })
 const musicHandlers = Alexa.CreateStateHandler(states.MUSIC,{
     "Music": function() {
-       
-        
-        this.emit(":responseReady");  
-
+        this.emit(":responseReady")  
     },
     "AMAZON.RepeatIntent": function() {
         let song = getSong(this.attributes["counter"], this.attributes["quizproperty"], this.attributes["quizsong"]);
@@ -258,10 +240,10 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
         this.attributes["counter"] = 0;
         this.attributes["quizscore"] = 0;
         // call spotify function to populate artist and songs array
-        // next will go in .then
         fetchArtistNames()
         .then((data) => {
-            this.attributes["songChoice"] = data;
+           var newdata = data.concat(classicSongArr);
+            this.attributes["songChoice"] = newdata;
             this.emitWithState("AskQuestion");  
         }) 
     },
@@ -417,12 +399,12 @@ function fetchsongAPI(title, singer) {
 }
 // This fetches artist names from spotify to use for fetchsongAPI (musix match) function
 function fetchArtistNames() {
-    let songArr =[];
-
+    let songArr =[];  
+    
     const spotifyHeaders = {
         headers: {
             Accept: 'application/json',
-            Authorization:"Bearer BQAzcrVCHLaMh_0vgGsOCCRTW_3REAB9LqjmMyh0fDdzxu-eSEtaSDG75lk_zPGrJ0wdFzzvIMFRZh_jO2Av9-XLiknITamgtEmWgoWmEmGHv0WJZmvoCJ2yCLLEPqyj0Cnbr18umil2PDmPva0cE6jh-kMXBVOW-4axX05Sai1gNkhwejCkdgm1oOAxJVGgLzY06FBI1_NmD6zE-5paVMhiLZWh2xS7YKV4waGVNxUk2Ns6yjqwMgc6EEr5h4BzDMNIMTzUymUskyHvmM9b39VCoBR8aoW6onixGgPXrBrxWTKPVMBRnOGrMJLBd4Elzq2HkQ"
+            Authorization:"Bearer BQDh5a8BRNQrtTu5zxTU8i4RmysGq37-B7ipFDtRVICJ5grqQP6dM87cGHyDFIXN1ScxSq8WZ3OOlqnLWq8oiGsgPvr4wROD_iLLbopV-48D6-8xg54hu2mhAKDrqZq0Kl3nq3KHxDlICdLQtWWP8Mnq4rd5L_zYFmQ9AeCoGir9exwK2Da2G_T9veQrrCCinxQAiKzydTkSTlEHGYYeJA9Ol7vlqZTmpQNezCyQu1Zgz3cKTV8bBF08do1yUQMCHbFRVM8qHD5ACaPrGv2ztBcemSAXD4PcJLRlYJZJA5zH0NUiJ1efYxVmjQwOM4wTO97rSw"
         }  
     };
     return axios.get("https://api.spotify.com/v1/me/top/artists", spotifyHeaders) 
@@ -434,6 +416,7 @@ function fetchArtistNames() {
                 popularity:artist.popularity
             })
         })
+     
         return songArr;
     })
     // This fetches artist song from spotify to use for fetchsongAPI (musix match) function
@@ -448,6 +431,7 @@ function fetchArtistNames() {
         return Promise.all(artistRequests);
       })
     .then(resolvedArtists => {
+     
         const data = resolvedArtists.reduce((acc, artistArr) => {
           const artistTracks = artistArr.data.tracks.map(track => {
             return {
@@ -460,6 +444,7 @@ function fetchArtistNames() {
           acc = acc.concat(artistTracks);
           return acc;
         }, []);
+       
         return data
     })
     .catch(err => {
@@ -471,7 +456,7 @@ function fetchArtistNames() {
         const spotConfig = {
             headers: {
               Authorization:
-                "Bearer BQAzcrVCHLaMh_0vgGsOCCRTW_3REAB9LqjmMyh0fDdzxu-eSEtaSDG75lk_zPGrJ0wdFzzvIMFRZh_jO2Av9-XLiknITamgtEmWgoWmEmGHv0WJZmvoCJ2yCLLEPqyj0Cnbr18umil2PDmPva0cE6jh-kMXBVOW-4axX05Sai1gNkhwejCkdgm1oOAxJVGgLzY06FBI1_NmD6zE-5paVMhiLZWh2xS7YKV4waGVNxUk2Ns6yjqwMgc6EEr5h4BzDMNIMTzUymUskyHvmM9b39VCoBR8aoW6onixGgPXrBrxWTKPVMBRnOGrMJLBd4Elzq2HkQ"
+                "Bearer BQDh5a8BRNQrtTu5zxTU8i4RmysGq37-B7ipFDtRVICJ5grqQP6dM87cGHyDFIXN1ScxSq8WZ3OOlqnLWq8oiGsgPvr4wROD_iLLbopV-48D6-8xg54hu2mhAKDrqZq0Kl3nq3KHxDlICdLQtWWP8Mnq4rd5L_zYFmQ9AeCoGir9exwK2Da2G_T9veQrrCCinxQAiKzydTkSTlEHGYYeJA9Ol7vlqZTmpQNezCyQu1Zgz3cKTV8bBF08do1yUQMCHbFRVM8qHD5ACaPrGv2ztBcemSAXD4PcJLRlYJZJA5zH0NUiJ1efYxVmjQwOM4wTO97rSw"
             }
           }
 
@@ -512,3 +497,213 @@ function fetchArtistNames() {
         alexa.execute();
     }
 
+    const classicSongArr = 
+    [ 
+  { title: 'Wannabe',
+    id: '0n6FMFq5bE22tNTmd6L9U4',
+    popularity: 54,
+    singer: 'Spice Girls' },
+  { title: 'Mr. Brightside',
+    id: '5zvJ6DUahHHjeknQPn7iAH',
+    popularity: 61,
+    singer: 'The Killers' },
+  { title: 'Bohemian Rhapsody - Remastered 2011',
+    id: '1AhDOtG9vPSOmsWgNW0BEY',
+    popularity: 79,
+    singer: 'Queen' },
+  { title: 'Video Killed The Radio Star',
+    id: '0CjThnQPB1DzU3jEtMv3oo',
+    popularity: 0,
+    singer: 'The Buggles' },
+  { title: 'Toxic',
+    id: '717TY4sfgKQm4kFbYQIzgo',
+    popularity: 63,
+    singer: 'Britney Spears' },
+  { title: 'Mambo No. 5 (A Little Bit of...)',
+    id: '3qrUiGsAC0ZXKP6uOtikOY',
+    popularity: 12,
+    singer: 'Lou Bega' },
+  { title: 'Come On Eileen',
+    id: '5uzNa0SBGOe5pPnstWHMCt',
+    popularity: 71,
+    singer: 'Dexys Midnight Runners' },
+  { title: 'P.I.M.P.',
+    id: '29UzHkRHqGrqSikUDRWIam',
+    popularity: 61,
+    singer: '50 Cent' }]
+//   { title: 'Brown Eyed Girl',
+//     id: '3yrSvpt2l1xhsV9Em88Pul',
+//     popularity: 78,
+//     singer: 'Van Morrison' },
+//   { title: '(Everything I Do) I Do It For You',
+//     id: '76qB2ZEZlEJAMqMqUjKusp',
+//     popularity: 70,
+//     singer: 'Bryan Adams' },
+//   { title: 'Sweet Child O\' Mine',
+//     id: '7o2CTH4ctstm8TNelqjb51',
+//     popularity: 79,
+//     singer: 'Guns N\' Roses' },
+//   { title: 'School\'s Out',
+//     id: '5Z8EDau8uNcP1E8JvmfkZe',
+//     popularity: 63,
+//     singer: 'Alice Cooper' },
+//   { title: 'Thriller',
+//     id: '3S2R0EVwBSAVMd5UMgKTL0',
+//     popularity: 67,
+//     singer: 'Michael Jackson' },
+//   { title: 'Crazy In Love',
+//     id: '0TwBtDAWpkpM3srywFVOV5',
+//     popularity: 70,
+//     singer: 'Beyoncé' },
+//   { title: 'I Wanna Dance with Somebody (Who Loves Me)',
+//     id: '2tUBqZG2AbRi7Q0BIrVrEj',
+//     popularity: 79,
+//     singer: 'Whitney Houston' },
+//   { title: 'I Want You Back',
+//     id: '3b0EOvScbZUc0qJx0E1L2z',
+//     popularity: 73,
+//     singer: 'The Jackson 5' },
+//   { title: 'Don\'t You Want Me - 2002 - Remaster',
+//     id: '3L7RtEcu1Hw3OXrpnthngx',
+//     popularity: 71,
+//     singer: 'The Human League' },
+//   { title: 'Hey Jude - Remastered 2015',
+//     id: '3H7sv3Krffn15BufUuXzf3',
+//     popularity: 70,
+//     singer: 'The Beatles' },
+//   { title: 'Wonderwall',
+//     id: '79RUMZfMNMpqZnswovvTqv',
+//     popularity: 73,
+//     singer: 'Oasis' },
+//   { title: 'Believe',
+//     id: '2goLsvvODILDzeeiT4dAoR',
+//     popularity: 72,
+//     singer: 'Cher' },
+//   { title: 'Livin\' On A Prayer',
+//     id: '3X7abqSXC4xrxuC1ykpWcY',
+//     popularity: 62,
+//     singer: 'Bon Jovi' },
+//   { title: 'Sweet Home Alabama',
+//     id: '4CJVkjo5WpmUAKp3R44LNb',
+//     popularity: 76,
+//     singer: 'Lynyrd Skynyrd' },
+//   { title: 'I\'m Gonna Be (500 Miles)',
+//     id: '67iAlVNDDdddxqSD2EZhFs',
+//     popularity: 59,
+//     singer: 'The Proclaimers' },
+//   { title: 'Suspicious Minds',
+//     id: '1H5IfYyIIAlgDX8zguUzns',
+//     popularity: 70,
+//     singer: 'Elvis Presley' },
+//   { title: 'Ignition (Remix)',
+//     id: '3zSCNTXI7Ed0PiidZVmzIe',
+//     popularity: 77,
+//     singer: 'R. Kelly' },
+//   { title: 'My Heart Will Go On - Love Theme from "Titanic"',
+//     id: '3oEHQmhvFLiE7ZYES0ulzv',
+//     popularity: 70,
+//     singer: 'Céline Dion' },
+//   { title: 'Milkshake',
+//     id: '2cMTIlktg3M9mXYqCPqw1J',
+//     popularity: 68,
+//     singer: 'Kelis' },
+//   { title: 'Girls Just Wanna Have Fun',
+//     id: '0xs0ewnEb6c2DlY7LjOD7t',
+//     popularity: 58,
+//     singer: 'Cyndi Lauper' },
+//   { title: 'Uptown Funk',
+//     id: '32OlwWuMpZ6b0aN2RZOeMS',
+//     popularity: 83,
+//     singer: 'Mark Ronson' },
+//   { title: 'Stayin\' Alive - Remastered Version',
+//     id: '3LmpQiFNgFCnvAnhhvKUyI',
+//     popularity: 29,
+//     singer: 'Bee Gees' },
+//   { title: 'Wake Me up Before You Go-Go',
+//     id: '0ikz6tENMONtK6qGkOrU3c',
+//     popularity: 77,
+//     singer: 'Wham!' },
+//   { title: 'Baby Love - Juke Box Single Version',
+//     id: '5uM9zdUz8PpYJME9wZCM4W',
+//     popularity: 61,
+//     singer: 'The Supremes' },
+//   { title: 'Livin\' la Vida Loca',
+//     id: '0Ph6L4l8dYUuXFmb71Ajnd',
+//     popularity: 70,
+//     singer: 'Ricky Martin' },
+//   { title: 'Hips Don\'t Lie',
+//     id: '3ZFTkvIE7kyPt6Nu3PEa7V',
+//     popularity: 82,
+//     singer: 'Shakira' },
+//   { title: 'Gold Digger',
+//     id: '1PS1QMdUqOal0ai3Gt7sDQ',
+//     popularity: 76,
+//     singer: 'Kanye West' },
+//   { title: 'Step Back In Time',
+//     id: '3J9604GDguYw2c3YvMJQ2a',
+//     popularity: 30,
+//     singer: 'Kylie Minogue' },
+//   { title: 'Good Luck (Feat Lisa Kekaula)',
+//     id: '0UyQ9TuZ1lG6eJi4eRKDfO',
+//     popularity: 53,
+//     singer: 'Basement Jaxx' },
+//   { title: 'MMMBop',
+//     id: '4RwIkzRJEk1pPVsyd592tc',
+//     popularity: 11,
+//     singer: 'Hanson' },
+//   { title: 'U Can\'t Touch This',
+//     id: '1B75hgRqe7A4fwee3g3Wmu',
+//     popularity: 71,
+//     singer: 'MC Hammer' },
+//   { title: 'Time Warp',
+//     id: '4WFeJTXNHIS2wURtwlAkhu',
+//     popularity: 64,
+//     singer: 'Patricia Quinn' },
+//   { title: 'Saturday Night - Radio Mix',
+//     id: '426dSooXpAbPSpwY4cqj3D',
+//     popularity: 2,
+//     singer: 'Whigfield' },
+//   { title: 'Agadoo - original',
+//     id: '1eIuD1gHB8TBO2IxPBrzL3',
+//     popularity: 0,
+//     singer: 'Black Lace' },
+//   { title: 'Ghostbusters - From "Ghostbusters"',
+//     id: '7MnxdIXJd4N4mHCTPNKhkX',
+//     popularity: 58,
+//     singer: 'Ray Parker, Jr.' },
+//   { title: 'The Locomotion',
+//     id: '5IHNFbwUmh7GHUhqdZ67QS',
+//     popularity: 46,
+//     singer: 'Little Eva' },
+//   { title: 'Standing in the Way of Control - Tronik Youth Remix',
+//     id: '4ifSfvHp0DJo3IKTEYSk1Y',
+//     popularity: 5,
+//     singer: 'Gossip' },
+//   { title: 'Firestarter',
+//     id: '0QwzCPyTv6UnzjAhZZ0CkB',
+//     popularity: 54,
+//     singer: 'The Prodigy' },
+//   { title: 'Song 2 - 2012 Remastered Version',
+//     id: '1FTSo4v6BOZH9QxKc3MbVM',
+//     popularity: 75,
+//     singer: 'Blur' },
+//   { title: 'Gettin\' Jiggy Wit It',
+//     id: '0weAUscowxeqDtpCgtbpgp',
+//     popularity: 72,
+//     singer: 'Will Smith' },
+//   { title: 'Like A Prayer',
+//     id: '1z3ugFmUKoCzGsI6jdY4Ci',
+//     popularity: 68,
+//     singer: 'Madonna' },
+//   { title: 'Jump Around',
+//     id: '2oTDOIAdsxPTE7yAp4YOcv',
+//     popularity: 63,
+//     singer: 'House Of Pain' },
+//   { title: 'Tainted Love',
+//     id: '6eSenvDwIVjNQLiQPcF7rL',
+//     popularity: 37,
+//     singer: 'Soft Cell' },
+//   { title: 'The Bare Necessities - From Walt Disney\'s \'\'The Jungle Book\'\'',
+//     id: '0IGNnlIB4pdxCK6WgziP9s',
+//     popularity: 1,
+//     singer: 'Bruce Reitherman' } ]
