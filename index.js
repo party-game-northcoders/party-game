@@ -31,8 +31,12 @@ const handlers = {
         this.handler.state = states.SPOTIFY;
         this.emitWithState("Spotify");
     },
+    "ReadyToPlayIntent" : function () {
+        this.handler.state = states.SPOTIFY;
+        this.emitWithState("AnswerMusisIntent")
+    },
     "AnswerMusicIntent": function() {
-        this.handler.state = states.MUSIC;
+        this.handler.state = states.SPOTIFY;
         this.emitWithState("AnswerMusicIntent");
     },
     "AnswerIntent": function() {
@@ -116,21 +120,16 @@ const spotifyHandlers = Alexa.CreateStateHandler(states.SPOTIFY,{
     "AskSpotifyQuestion": function () {
         if (this.attributes["counter"] == 0) {
             this.attributes["response"] = START_QUIZ_MESSAGE + " ";
-            let songObj = songRandomiser(this.attributes["songChoice"]);
-            let property = "singer";
-        
-               this.attributes["quizsong"] = songObj;
-               this.attributes["quizproperty"] = property;
-               this.attributes["counter"]++;
-        
-               let songQuestion = getQuestion(this.attributes["counter"], property, songObj.title);
-               let songGuess = this.attributes["response"];
-                // asks the question after song is played.
-               this.emit(":ask", songQuestion, PlaySpotifySong(songObj).then(() => {
-                songGuess
-               }))
         }
-    else {
+        // this.attributes["quizsong"] = songObj;
+        // this.attributes["quizproperty"] = property;
+
+        let prevScore = this.attributes["response"] + "Are you ready to play?";
+
+        this.emit(":ask", prevScore)
+    },
+    
+    "ReadyToPlayIntent" : function () {
         let songObj = songRandomiser(this.attributes["songChoice"]);
         let property = "singer";
     
@@ -138,20 +137,33 @@ const spotifyHandlers = Alexa.CreateStateHandler(states.SPOTIFY,{
            this.attributes["quizproperty"] = property;
            this.attributes["counter"]++;
             
-           let songQuestion = getQuestion(this.attributes["counter"], property, songObj.title);
-           let songGuess = this.attributes["response"];
-            // asks the question after song is played.
-           this.emit(":ask", songGuess, PlaySpotifySong(songObj).then(() => {
-            songQuestion
-           }))
-    }
+        //    let songQuestion = getQuestion(songObj).then(()=> {
+        // },20000);
+        PlaySpotifySong (songObj)
+            .then (() => {
+                let question = getQuestion() 
+                this.emit(":ask", question, question)
+            })
+        
+        // getQuestion(songObj).then((songQuestion)=> {
+        //     console.log(songQuestion)
+        //     let songGuess = this.attributes["response"] + songQuestion ;
+        //     console.log(songGuess)
+        //     this.emit(":ask", songGuess, songGuess)
+        //  });
+        //    let songGuess = this.attributes["response"] + songQuestion;
+        //     // asks the question after song is played.
+        //    this.emit(":ask", songGuess, songQuestion)
+    
         
     },
+
     "AnswerMusicIntent": function() {
         let response = "";
         let speechOutput = "";
         let data = this.attributes["quizsong"];
         let property = this.attributes["quizproperty"]
+        
         
         let correct = compareSlots(this.event.request.intent.slots, data[property]);
         
@@ -345,8 +357,8 @@ function getSong(counter, lyrics) {
     return "Here is song number " + counter + ". Name the artist. The song is coming in 5. 4. 3. 2. 1. " + lyrics;    
 }
 
-function getQuestion(counter) {
-    return "Name the artist. "
+function getQuestion() {
+        return "Name the artist."
 }
 
 // returns the answer after allocated time.
@@ -410,7 +422,7 @@ function fetchArtistNames() {
     const spotifyHeaders = {
         headers: {
             Accept: 'application/json',
-            Authorization:"Bearer BQBdnfi0UovCbRtqgsfJLyDc2T4DxBpHZIYl87_BlbX_HkZI_7td0JFKOrSqzsYRZJH70f19EUZjzuzgH-m2HM07ljbzfRA_YjiG9YcJwLHfOLlWeRJIZ4gU5_TkUTWd2C8jNX_OyUjUmzUwoCSj3rp9Dg33QlH5-uMDRZ4Jy2VJvySGYd56ZM4DN4Iepz_43Uc5IB49ZlKwtubh83DbzZEARat-XBZXKLTMk3Xmn96Vmc92TFRPIaLI6xRbO9FOUS40r8FejyjM5VBuK0i10KaxQH-4KA6z7y2OOAZ-GIZRViIX8qpyG48Qjq-r-VHpbOAurw"
+            Authorization:"Bearer BQAzcrVCHLaMh_0vgGsOCCRTW_3REAB9LqjmMyh0fDdzxu-eSEtaSDG75lk_zPGrJ0wdFzzvIMFRZh_jO2Av9-XLiknITamgtEmWgoWmEmGHv0WJZmvoCJ2yCLLEPqyj0Cnbr18umil2PDmPva0cE6jh-kMXBVOW-4axX05Sai1gNkhwejCkdgm1oOAxJVGgLzY06FBI1_NmD6zE-5paVMhiLZWh2xS7YKV4waGVNxUk2Ns6yjqwMgc6EEr5h4BzDMNIMTzUymUskyHvmM9b39VCoBR8aoW6onixGgPXrBrxWTKPVMBRnOGrMJLBd4Elzq2HkQ"
         }  
     };
     return axios.get("https://api.spotify.com/v1/me/top/artists", spotifyHeaders) 
@@ -459,33 +471,38 @@ function fetchArtistNames() {
         const spotConfig = {
             headers: {
               Authorization:
-                "Bearer BQBdnfi0UovCbRtqgsfJLyDc2T4DxBpHZIYl87_BlbX_HkZI_7td0JFKOrSqzsYRZJH70f19EUZjzuzgH-m2HM07ljbzfRA_YjiG9YcJwLHfOLlWeRJIZ4gU5_TkUTWd2C8jNX_OyUjUmzUwoCSj3rp9Dg33QlH5-uMDRZ4Jy2VJvySGYd56ZM4DN4Iepz_43Uc5IB49ZlKwtubh83DbzZEARat-XBZXKLTMk3Xmn96Vmc92TFRPIaLI6xRbO9FOUS40r8FejyjM5VBuK0i10KaxQH-4KA6z7y2OOAZ-GIZRViIX8qpyG48Qjq-r-VHpbOAurw"
+                "Bearer BQAzcrVCHLaMh_0vgGsOCCRTW_3REAB9LqjmMyh0fDdzxu-eSEtaSDG75lk_zPGrJ0wdFzzvIMFRZh_jO2Av9-XLiknITamgtEmWgoWmEmGHv0WJZmvoCJ2yCLLEPqyj0Cnbr18umil2PDmPva0cE6jh-kMXBVOW-4axX05Sai1gNkhwejCkdgm1oOAxJVGgLzY06FBI1_NmD6zE-5paVMhiLZWh2xS7YKV4waGVNxUk2Ns6yjqwMgc6EEr5h4BzDMNIMTzUymUskyHvmM9b39VCoBR8aoW6onixGgPXrBrxWTKPVMBRnOGrMJLBd4Elzq2HkQ"
             }
           }
-          return axios
-                .put(
-                  "https://api.spotify.com/v1/me/player/play",
-                  { uris: ["spotify:track:" + song.id] },
-                  spotConfig
-                )
-                .then((response) => {
-                  return axios
+
+          return new Promise((resolve, reject) => {
+                axios
                     .put(
-                      "https://api.spotify.com/v1/me/player/seek?position_ms=30000", 
-                      {}, spotConfig
+                      "https://api.spotify.com/v1/me/player/play",
+                      { uris: ["spotify:track:" + song.id] },
+                      spotConfig
                     )
                     .then((response) => {
-                      setTimeout(function () {
-                        return axios
-                        .put("https://api.spotify.com/v1/me/player/pause", {}, spotConfig)
-                        .then(response => {
+                      return axios
+                        .put(
+                          "https://api.spotify.com/v1/me/player/seek?position_ms=30000", 
+                          {}, spotConfig
+                        )
+                        .then((response) => {
+                          setTimeout(function () {
+                            return axios
+                            .put("https://api.spotify.com/v1/me/player/pause", {}, spotConfig)
+                            .then(response => {
+                                resolve();
+                            })
+                          }, 12000);
                         })
-                      }, 12000);
                     })
-                })
-                .catch(err => {
-                  console.log(err.message);
-                });
+                    .catch(err => {
+                      console.log(err.message);
+                    });
+          })
+
     }
 
     exports.handler = (event, context, callback) => {
