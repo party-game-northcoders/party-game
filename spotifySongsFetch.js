@@ -4,7 +4,7 @@ const app = express();
 const bodyParser = require("body-parser");
 const axios = require("axios");
 app.use(bodyParser.json());
-app.listen(3000);
+app.listen(3001);
 
 const fs = require("fs");
 
@@ -15,7 +15,7 @@ const spotifyHeaders = {
   headers: {
     Accept: "application/json",
     Authorization:
-      "Bearer BQCtH6XtoV0poVgHMT_7wXoz_uIe0jKcnAssovxGuWkojWoBMaRgI_fJCEsnkVm62eBuB-bYJlJkYL6uf3b0aXmtiXVO4bjHghdBLqw5p0k4TT7CAgD1xx-gC_xhZSS_B9qd5kDkgYH0jctohJT-ZFW0dd2stIje8Y1mvySDHCuPShdcssdBqQGxI_zVyWHZjkFrrZnrIT38uzPOsDBez8j8SW7mYhkf5DRd4N8LJvAOeij2Ff7rWviilkwD_VYJVy1Ceb7WOfreAD3qdaRHSHo58T8kwSPo3xEJyRypDdc2s80qaasRFLAvcTsLJagkW2rkKQ"
+      "Bearer BQAMQdlobUzrZ4DnpHpS99mJtB1_kAMA7g27si0o9YzjKrEEKj8dkfgKyR8SRkaonqHmJ2eReUIt34mJr51SLJZANuVk8sShSCWDZCQeBQSfQ0KrBvs-NejOavmZYsAhigTLx3qTUjCtINlaf6uglB-Gh6S92OXf0S09mjzDL1HUDAxmFBzEB9NbgXYk8NUrIOi2Ede6Yue1cViKg_XjPTmtAZYzzCcEE19NpD2Hx5Y7m4sXG-0UqWAdGmj1JYUtIN9zQOidKIFqWPf61_myu1oJjr1b2bh-_hY57NQ_pLOFMOjRY7d11Far9j24v0kQNDJ0rw"
   },
   data: {
     uris: ["spotify:track:4iV5W9uYEdYUVa79Axb7Rh"]
@@ -71,7 +71,7 @@ app.get("/playSong", function(req, res) {
   const spotConfig = {
     headers: {
       Authorization:
-        "Bearer BQCtH6XtoV0poVgHMT_7wXoz_uIe0jKcnAssovxGuWkojWoBMaRgI_fJCEsnkVm62eBuB-bYJlJkYL6uf3b0aXmtiXVO4bjHghdBLqw5p0k4TT7CAgD1xx-gC_xhZSS_B9qd5kDkgYH0jctohJT-ZFW0dd2stIje8Y1mvySDHCuPShdcssdBqQGxI_zVyWHZjkFrrZnrIT38uzPOsDBez8j8SW7mYhkf5DRd4N8LJvAOeij2Ff7rWviilkwD_VYJVy1Ceb7WOfreAD3qdaRHSHo58T8kwSPo3xEJyRypDdc2s80qaasRFLAvcTsLJagkW2rkKQ"
+        "Bearer BQAMQdlobUzrZ4DnpHpS99mJtB1_kAMA7g27si0o9YzjKrEEKj8dkfgKyR8SRkaonqHmJ2eReUIt34mJr51SLJZANuVk8sShSCWDZCQeBQSfQ0KrBvs-NejOavmZYsAhigTLx3qTUjCtINlaf6uglB-Gh6S92OXf0S09mjzDL1HUDAxmFBzEB9NbgXYk8NUrIOi2Ede6Yue1cViKg_XjPTmtAZYzzCcEE19NpD2Hx5Y7m4sXG-0UqWAdGmj1JYUtIN9zQOidKIFqWPf61_myu1oJjr1b2bh-_hY57NQ_pLOFMOjRY7d11Far9j24v0kQNDJ0rw"
     }
   };
   return axios
@@ -125,26 +125,26 @@ app.get("/playSong", function(req, res) {
             )
             .then((response) => {
               setTimeout(function (){
-
                 return axios
                 .put("https://api.spotify.com/v1/me/player/pause", {}, spotConfig)
                 .then(response => {
-
+                  console.log(response, "***************")
                 })
                 .catch(err => {
-                  console.log("GOODBYE" + err.message, err);
+                  console.log("Pause Error" + err.message, err);
                 })
               },12000);
             })
             .catch(err => {
-              console.log("HELLO" + err.message, err);
+              console.log("Play song position error" + err.message, err);
             })
         })
         .catch(err => {
-          console.log(err.message);
+          console.log("Song play error", err.message);
         });
     })
     .catch(err => {
       throw err;
     });
 });
+
