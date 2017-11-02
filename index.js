@@ -415,11 +415,6 @@ function songRandomiser(arr) {
     return songObj;
 }
 
-// start playlist then quit
-// function playPlaylist () {
-//     return axios.get()
-
-// }
 function fetchsongAPI(title, singer) {
     return axios.get(`https://api.musixmatch.com/ws/1.1/matcher.lyrics.get?q_track=${title}&q_artist=${singer}&apikey=c6af8e74da168c2f810eab97f6a8f603`)
     .then(response => {
@@ -434,7 +429,7 @@ function fetchsongAPI(title, singer) {
         return data;
     })
 }
-// This fetches artist names from spotify to use for fetchsongAPI (musix match) function
+
 function fetchArtistNames() {
     let songArr =[];  
     
@@ -456,7 +451,6 @@ function fetchArtistNames() {
      
         return songArr;
     })
-    // This fetches artist song from spotify to use for fetchsongAPI (musix match) function
     .then(artists => {
         artists.sort((a, b) => b.popularity - a.popularity);
         const artistRequests = artists.map(artist => {
@@ -550,7 +544,7 @@ function fetchArtistNames() {
     id: '5zvJ6DUahHHjeknQPn7iAH',
     popularity: 61,
     singer: 'The Killers' },
-  { title: 'Bohemian Rhapsody - Remastered 2011',
+  { title: 'Bohemian Rhapsody',
     id: '1AhDOtG9vPSOmsWgNW0BEY',
     popularity: 79,
     singer: 'Queen' },
@@ -562,7 +556,7 @@ function fetchArtistNames() {
     id: '717TY4sfgKQm4kFbYQIzgo',
     popularity: 63,
     singer: 'Britney Spears' },
-  { title: 'Mambo No. 5 (A Little Bit of...)',
+  { title: 'Mambo No. 5',
     id: '3qrUiGsAC0ZXKP6uOtikOY',
     popularity: 12,
     singer: 'Lou Bega' },
@@ -582,10 +576,10 @@ function fetchArtistNames() {
     id: '76qB2ZEZlEJAMqMqUjKusp',
     popularity: 70,
     singer: 'Bryan Adams' },
-  { title: 'Sweet Child O\' Mine',
+  { title: 'Sweet Child Of Mine',
     id: '7o2CTH4ctstm8TNelqjb51',
     popularity: 79,
-    singer: 'Guns N\' Roses' },
+    singer: 'Guns and Roses' },
   { title: 'School\'s Out',
     id: '5Z8EDau8uNcP1E8JvmfkZe',
     popularity: 63,
@@ -606,11 +600,11 @@ function fetchArtistNames() {
     id: '3b0EOvScbZUc0qJx0E1L2z',
     popularity: 73,
     singer: 'The Jackson 5' },
-  { title: 'Don\'t You Want Me - 2002 - Remaster',
+  { title: 'Don\'t You Want Me',
     id: '3L7RtEcu1Hw3OXrpnthngx',
     popularity: 71,
     singer: 'The Human League' },
-  { title: 'Hey Jude - Remastered 2015',
+  { title: 'Hey Jude',
     id: '3H7sv3Krffn15BufUuXzf3',
     popularity: 70,
     singer: 'The Beatles' },
@@ -638,11 +632,11 @@ function fetchArtistNames() {
     id: '1H5IfYyIIAlgDX8zguUzns',
     popularity: 70,
     singer: 'Elvis Presley' },
-  { title: 'Ignition (Remix)',
+  { title: 'Ignition',
     id: '3zSCNTXI7Ed0PiidZVmzIe',
     popularity: 77,
     singer: 'R. Kelly' },
-  { title: 'My Heart Will Go On - Love Theme from "Titanic"',
+  { title: 'My Heart Will Go On',
     id: '3oEHQmhvFLiE7ZYES0ulzv',
     popularity: 70,
     singer: 'Céline Dion' },
@@ -658,15 +652,15 @@ function fetchArtistNames() {
     id: '32OlwWuMpZ6b0aN2RZOeMS',
     popularity: 83,
     singer: 'Mark Ronson' },
-  { title: 'Stayin\' Alive - Remastered Version',
+  { title: 'Stayin\' Alive',
     id: '3LmpQiFNgFCnvAnhhvKUyI',
     popularity: 29,
     singer: 'Bee Gees' },
   { title: 'Wake Me up Before You Go-Go',
     id: '0ikz6tENMONtK6qGkOrU3c',
     popularity: 77,
-    singer: 'Wham!' },
-  { title: 'Baby Love - Juke Box Single Version',
+    singer: 'Wham' },
+  { title: 'Baby Love',
     id: '5uM9zdUz8PpYJME9wZCM4W',
     popularity: 61,
     singer: 'The Supremes' },
@@ -686,11 +680,11 @@ function fetchArtistNames() {
     id: '3J9604GDguYw2c3YvMJQ2a',
     popularity: 30,
     singer: 'Kylie Minogue' },
-  { title: 'Good Luck (Feat Lisa Kekaula)',
+  { title: 'Good Luck',
     id: '0UyQ9TuZ1lG6eJi4eRKDfO',
     popularity: 53,
     singer: 'Basement Jaxx' },
-  { title: 'MMMBop',
+  { title: 'mmm Bop',
     id: '4RwIkzRJEk1pPVsyd592tc',
     popularity: 11,
     singer: 'Hanson' },
@@ -702,23 +696,23 @@ function fetchArtistNames() {
     id: '4WFeJTXNHIS2wURtwlAkhu',
     popularity: 64,
     singer: 'Patricia Quinn' },
-  { title: 'Saturday Night - Radio Mix',
+  { title: 'Saturday Night',
     id: '426dSooXpAbPSpwY4cqj3D',
     popularity: 2,
     singer: 'Whigfield' },
-  { title: 'Agadoo - original',
+  { title: 'Agadoo ',
     id: '1eIuD1gHB8TBO2IxPBrzL3',
     popularity: 0,
     singer: 'Black Lace' },
-  { title: 'Ghostbusters - From "Ghostbusters"',
+  { title: 'Ghostbusters',
     id: '7MnxdIXJd4N4mHCTPNKhkX',
     popularity: 58,
-    singer: 'Ray Parker, Jr.' },
+    singer: 'Ray Parker Junior' },
   { title: 'The Locomotion',
     id: '5IHNFbwUmh7GHUhqdZ67QS',
     popularity: 46,
     singer: 'Little Eva' },
-  { title: 'Standing in the Way of Control - Tronik Youth Remix',
+  { title: 'Standing in the Way of Control',
     id: '4ifSfvHp0DJo3IKTEYSk1Y',
     popularity: 5,
     singer: 'Gossip' },
@@ -726,7 +720,7 @@ function fetchArtistNames() {
     id: '0QwzCPyTv6UnzjAhZZ0CkB',
     popularity: 54,
     singer: 'The Prodigy' },
-  { title: 'Song 2 - 2012 Remastered Version',
+  { title: 'Song 2"',
     id: '1FTSo4v6BOZH9QxKc3MbVM',
     popularity: 75,
     singer: 'Blur' },
