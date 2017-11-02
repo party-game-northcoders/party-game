@@ -217,7 +217,7 @@ const spotifyHandlers = Alexa.CreateStateHandler(states.SPOTIFY,{
         this.emit(":responseReady");
     },
     "Unhandled": function() {
-        this.emit(":ask", REPROMPT, REPROMPT);
+        this.emitWithState('AnswerMusicIntent');
     }
 
 })
@@ -268,7 +268,7 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
             this.attributes["response"] = START_QUIZ_MESSAGE + " ";
         }
         
-        let fetchedSongObj = songRandomiser(this.attributes["songChoice"]);
+        //let fetchedSongObj = songRandomiser(this.attributes["songChoice"]);
         let classicsongObj = songRandomiser(classicSongArr);
         
         // remove selected songs from classic array
@@ -276,8 +276,8 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
         let firstPart = classicSongArr.slice(0, index);
         let secondPart = classicSongArr.slice(index + 1);
         classicSongArr = firstPart.concat(secondPart);
-
-        let songObj = pickRandomSong(fetchedSongObj, classicsongObj);
+        let songObj  = classicSongObj;
+        //let songObj = pickRandomSong(fetchedSongObj, classicsongObj);
         let property = "singer";
  
         //fetch lyrics from musixmatch with title and singer from spotify
