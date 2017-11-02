@@ -11,11 +11,16 @@
   "license": "ISC",
   "dependencies": {
     "alexa-sdk": "^1.0.15",
+    "bespoken-tools": "^1.1.1",
+    "chai": "^4.1.2",
+    "ffmpeg": "0.0.4",
+    "mocha": "^4.0.1",
     "util": "^0.10.3"
   },
   "devDependencies": {
     "axios": "^0.17.0",
     "body-parser": "^1.18.2",
-    "express": "^4.16.2"
+    "express": "^4.16.2",
+    "underscore": "^1.8.3"
   }
 }
