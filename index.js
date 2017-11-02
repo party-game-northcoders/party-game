@@ -7,7 +7,7 @@ const _ = require('underscore');
 var APP_ID = undefined;
 
 const counter = 0;
-const token = "Bearer BQBGx43SUx3TlYp7EG-zFXwYTA2AxCJMwx8zGySUXQRlicWXleXH9cDyuDFAhZsonCTqE_JRnE9-qERzsfyXNchtdLGECkvIoUsL3gj1VgHJdXT7hO5_6j-Yl96Q5mWK31fGLzbXnduLmDnt8NIDM5S6ipi7HliVT3aONxQMtwKaNkYq-BYm4bONFgCTsrXhi9LB_qf2lootXu4GIf-Ovt-_f9ZaHMSCUqbEDsyktJkNmbCM03OXb9O44s0hWgOQg6lsLSB3La9os4cq-v6LJQQjQ8PsIRBaIOq-QZXwRCHbBiS-prDpnXncvsQnc9Rsi9A9dQ";
+const token = "Bearer BQBeBMLMvVmoJ21o-BMNYvZ16LFzQBsJdccWd28uUBMXS_4i2MZohQ1FuDK6LlEc_lQ22yutfZosczWpzck2FKVLWPp99CKsY7QJPzBg-W77qm3Fv_w1DDKTr1ePhAmJuiFo-3Y6PxwgrcD1hydDzHskGxzslSTlTdY6IkM06zVJCD_K4X_LGoVyoiGGw5lSEhndoAgEKb1KD0VR143hfEJQD84iaMIGJcZ8hSnBIoYmIEHNQHgRtjXzOlHizXQlNvLo4U8eiEOHXLEMoeFp7zcYh8u-q3zMqAqbJw05dCz-4SxmsBmReS8Cl8440TeuJomj7Q";
 
 const states = {
     START: "_START",
@@ -217,7 +217,7 @@ const spotifyHandlers = Alexa.CreateStateHandler(states.SPOTIFY,{
         this.emit(":responseReady");
     },
     "Unhandled": function() {
-        this.emitWithState('AnswerMusicIntent');
+        this.emit(":ask", REPROMPT, REPROMPT);
     }
 
 })
@@ -366,8 +366,6 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
     }
 }) 
 
-
-// function defining song that alexa uses for question
 function getSong(counter, lyrics) {
     return "Here is song number " + counter + ". The song is coming in 3. 2. 1. " + lyrics + " name the artist. ";    
 }
@@ -376,7 +374,6 @@ function getQuestion() {
         return "Name the artist."
 }
 
-// returns the answer after allocated time.
 function getAnswer(property, song) {
 return " The song was " + song.title + " bye " + song[property] + ". ";
 }
@@ -404,7 +401,6 @@ function getFinalScore (score, counter) {
     return "You scored " + score + " out of " + counter + ". ";
 }
 
-// randomly gets artist and song for fetch request
 function songRandomiser(arr) {
     let random = Math.floor(Math.random() * arr.length);
     let songObj = {
@@ -535,6 +531,7 @@ function fetchArtistNames() {
     }
 
     let classicSongArr = 
+
     [ 
   { title: 'Wannabe',
     id: '0n6FMFq5bE22tNTmd6L9U4',
@@ -544,7 +541,7 @@ function fetchArtistNames() {
     id: '5zvJ6DUahHHjeknQPn7iAH',
     popularity: 61,
     singer: 'The Killers' },
-  { title: 'Bohemian Rhapsody',
+  { title: 'Bohemian Rhapsody - Remastered 2011',
     id: '1AhDOtG9vPSOmsWgNW0BEY',
     popularity: 79,
     singer: 'Queen' },
@@ -556,7 +553,7 @@ function fetchArtistNames() {
     id: '717TY4sfgKQm4kFbYQIzgo',
     popularity: 63,
     singer: 'Britney Spears' },
-  { title: 'Mambo No. 5',
+  { title: 'Mambo No. 5 (A Little Bit of...)',
     id: '3qrUiGsAC0ZXKP6uOtikOY',
     popularity: 12,
     singer: 'Lou Bega' },
@@ -576,10 +573,6 @@ function fetchArtistNames() {
     id: '76qB2ZEZlEJAMqMqUjKusp',
     popularity: 70,
     singer: 'Bryan Adams' },
-  { title: 'Sweet Child Of Mine',
-    id: '7o2CTH4ctstm8TNelqjb51',
-    popularity: 79,
-    singer: 'Guns and Roses' },
   { title: 'School\'s Out',
     id: '5Z8EDau8uNcP1E8JvmfkZe',
     popularity: 63,
@@ -600,11 +593,11 @@ function fetchArtistNames() {
     id: '3b0EOvScbZUc0qJx0E1L2z',
     popularity: 73,
     singer: 'The Jackson 5' },
-  { title: 'Don\'t You Want Me',
+  { title: 'Don\'t You Want Me - 2002 - Remaster',
     id: '3L7RtEcu1Hw3OXrpnthngx',
     popularity: 71,
     singer: 'The Human League' },
-  { title: 'Hey Jude',
+  { title: 'Hey Jude - Remastered 2015',
     id: '3H7sv3Krffn15BufUuXzf3',
     popularity: 70,
     singer: 'The Beatles' },
@@ -632,11 +625,11 @@ function fetchArtistNames() {
     id: '1H5IfYyIIAlgDX8zguUzns',
     popularity: 70,
     singer: 'Elvis Presley' },
-  { title: 'Ignition',
+  { title: 'Ignition (Remix)',
     id: '3zSCNTXI7Ed0PiidZVmzIe',
     popularity: 77,
     singer: 'R. Kelly' },
-  { title: 'My Heart Will Go On',
+  { title: 'My Heart Will Go On - Love Theme from "Titanic"',
     id: '3oEHQmhvFLiE7ZYES0ulzv',
     popularity: 70,
     singer: 'Céline Dion' },
@@ -652,15 +645,15 @@ function fetchArtistNames() {
     id: '32OlwWuMpZ6b0aN2RZOeMS',
     popularity: 83,
     singer: 'Mark Ronson' },
-  { title: 'Stayin\' Alive',
+  { title: 'Stayin\' Alive - Remastered Version',
     id: '3LmpQiFNgFCnvAnhhvKUyI',
     popularity: 29,
     singer: 'Bee Gees' },
   { title: 'Wake Me up Before You Go-Go',
     id: '0ikz6tENMONtK6qGkOrU3c',
     popularity: 77,
-    singer: 'Wham' },
-  { title: 'Baby Love',
+    singer: 'Wham!' },
+  { title: 'Baby Love - Juke Box Single Version',
     id: '5uM9zdUz8PpYJME9wZCM4W',
     popularity: 61,
     singer: 'The Supremes' },
@@ -680,11 +673,11 @@ function fetchArtistNames() {
     id: '3J9604GDguYw2c3YvMJQ2a',
     popularity: 30,
     singer: 'Kylie Minogue' },
-  { title: 'Good Luck',
+  { title: 'Good Luck (Feat Lisa Kekaula)',
     id: '0UyQ9TuZ1lG6eJi4eRKDfO',
     popularity: 53,
     singer: 'Basement Jaxx' },
-  { title: 'mmm Bop',
+  { title: 'MMMBop',
     id: '4RwIkzRJEk1pPVsyd592tc',
     popularity: 11,
     singer: 'Hanson' },
@@ -696,23 +689,23 @@ function fetchArtistNames() {
     id: '4WFeJTXNHIS2wURtwlAkhu',
     popularity: 64,
     singer: 'Patricia Quinn' },
-  { title: 'Saturday Night',
+  { title: 'Saturday Night - Radio Mix',
     id: '426dSooXpAbPSpwY4cqj3D',
     popularity: 2,
     singer: 'Whigfield' },
-  { title: 'Agadoo ',
+  { title: 'Agadoo - original',
     id: '1eIuD1gHB8TBO2IxPBrzL3',
     popularity: 0,
     singer: 'Black Lace' },
-  { title: 'Ghostbusters',
+  { title: 'Ghostbusters - From "Ghostbusters"',
     id: '7MnxdIXJd4N4mHCTPNKhkX',
     popularity: 58,
-    singer: 'Ray Parker Junior' },
+    singer: 'Ray Parker, Jr.' },
   { title: 'The Locomotion',
     id: '5IHNFbwUmh7GHUhqdZ67QS',
     popularity: 46,
     singer: 'Little Eva' },
-  { title: 'Standing in the Way of Control',
+  { title: 'Standing in the Way of Control - Tronik Youth Remix',
     id: '4ifSfvHp0DJo3IKTEYSk1Y',
     popularity: 5,
     singer: 'Gossip' },
@@ -720,7 +713,7 @@ function fetchArtistNames() {
     id: '0QwzCPyTv6UnzjAhZZ0CkB',
     popularity: 54,
     singer: 'The Prodigy' },
-  { title: 'Song 2"',
+  { title: 'Song 2 - 2012 Remastered Version',
     id: '1FTSo4v6BOZH9QxKc3MbVM',
     popularity: 75,
     singer: 'Blur' },
@@ -739,5 +732,10 @@ function fetchArtistNames() {
   { title: 'Tainted Love',
     id: '6eSenvDwIVjNQLiQPcF7rL',
     popularity: 37,
-    singer: 'Soft Cell' }
+    singer: 'Soft Cell' },
+  { title: 'The Bare Necessities - From Walt Disney\'s \'\'The Jungle Book\'\'',
+    id: '0IGNnlIB4pdxCK6WgziP9s',
+    popularity: 1,
+    singer: 'Bruce Reitherman' } 
 ]
+
