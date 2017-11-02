@@ -1,12 +1,13 @@
 "use strict";
 const axios = require('axios');
 const songAudio = require('./songlist');
-var Alexa = require("alexa-sdk");
+const Alexa = require("alexa-sdk");
+const _ = require('underscore');
 
 var APP_ID = undefined;
 
 const counter = 0;
-const token = "Bearer BQD4EcDI_D163gZBOQMtO3W9nPTyA3zMN4u6RsYz8jc8nGlBnFbPYyZ3si3rIFyyUU03O9F-Qq20cbVZ3F8V4xayP1P604P2koWzjUFw60-D5yEHLCMCr1RZjawKhVX_u3y9FJ-vler4llOJ98OOCqUB6XJQbcuu3lceopLY5aFe7pcqwMZCyRuVz5Axqleds9_HlHYKdH0j33dwAsiJwnzs6m9POgus9wSvRtBFwPWbVtnXg4dvhnpoLvCfb_1jsLhQ2Ux7FJn2OgNwjHaxgGgKB9EbpaO5Lszr41ibVVE3QiXDul4w7ok9cQPS6yuNsORSpA"
+const token = "Bearer BQBGx43SUx3TlYp7EG-zFXwYTA2AxCJMwx8zGySUXQRlicWXleXH9cDyuDFAhZsonCTqE_JRnE9-qERzsfyXNchtdLGECkvIoUsL3gj1VgHJdXT7hO5_6j-Yl96Q5mWK31fGLzbXnduLmDnt8NIDM5S6ipi7HliVT3aONxQMtwKaNkYq-BYm4bONFgCTsrXhi9LB_qf2lootXu4GIf-Ovt-_f9ZaHMSCUqbEDsyktJkNmbCM03OXb9O44s0hWgOQg6lsLSB3La9os4cq-v6LJQQjQ8PsIRBaIOq-QZXwRCHbBiS-prDpnXncvsQnc9Rsi9A9dQ";
 
 const states = {
     START: "_START",
@@ -54,12 +55,14 @@ const handlers = {
     }
 }
 
-const START_GAME_MESSAGE = "Hey party people! When you're ready to play, say. start lyrics quiz. or. start music quiz . or. start party playlist. ";
-const HELP_MESSAGE = "Please say . start lyrics quiz. or start music quiz. to begin the music quiz. or say start party playlist";
-const GAME_END_MESSAGE = "You're shit. Goodbye";
+//const START_GAME_MESSAGE = "Hey party people! When you're ready to play, say. start lyrics quiz. or. start music quiz . or. start party playlist. ";
+const START_GAME_MESSAGE = "Hey party people! When you're ready to play, say. start lyrics quiz. or. start music quiz. ";
+const HELP_MESSAGE = "Please say . start lyrics quiz. or start music quiz. to begin the music quiz. ";
+const GAME_LOSE_MESSAGE = " You are really shit at this game. Don't bother playing again! Goodbye ";
+const GAME_WIN_MESSAGE = "Oh my god! You are actually not as bad at this game as I thought. Laters ";
 const START_QUIZ_MESSAGE = "I will play 5 songs, and after each song I will ask you to name the artist. ";
-const PLAY_MUSIC_MESSAGE = "The song will play in 3. 2. 1. "
-const PAUSE_MESSAGE = "Please say continue to resume song. ";
+const PLAY_MUSIC_MESSAGE = "The song will play in 3. 2. 1. ";
+const REPROMPT = "Come on! Are you ready to play?";
 
 
 function getSarcyComment (type) {
@@ -68,8 +71,8 @@ function getSarcyComment (type) {
     else return "<say-as interpret-as='interjection'>" + sarcyCommentsIncorrect[getRandomSong(0, sarcyCommentsIncorrect.length-1)] + " </say-as><break strength='strong'/>";
 }
 
-const sarcyCommentsCorrect = ["Well done!. ", "Smarty pants. "];
-const sarcyCommentsIncorrect = ["As if!. ", "Seriously?. "];
+const sarcyCommentsCorrect = ["Well done!. ", "Smarty pants. ", "Check you out. ", "Correctamundo. ", "You are a wise and noble human being. ", "Wrong! . Just kidding . You're right. "];
+const sarcyCommentsIncorrect = ["As if!. ", "Seriously?. ", "Now you are not even trying. ", "You might as well give up now", "I don't know why I bother! "];
 
 
 const startHandlers = Alexa.CreateStateHandler(states.START, {
@@ -110,8 +113,7 @@ const spotifyHandlers = Alexa.CreateStateHandler(states.SPOTIFY,{
         this.attributes["response"] = "";
         this.attributes["counter"] = 0;
         this.attributes["quizscore"] = 0;
-        // call spotify function to populate artist and songs array
-        // next will go in .then
+        
         fetchArtistNames()
         .then((data) => {
             
@@ -125,13 +127,18 @@ const spotifyHandlers = Alexa.CreateStateHandler(states.SPOTIFY,{
         };
 
         let prevScore = this.attributes["response"] + "Are you ready to play? ";
-        this.emit(":ask", prevScore)
+        this.emit(":ask", prevScore, REPROMPT);
     },
     
     "ReadyToPlayIntent" : function () {
         let fetchedSongObj = songRandomiser(this.attributes["songChoice"]);
         let classicsongObj = songRandomiser(classicSongArr);
-        
+        // remove selected songs from classic array
+        let index = _.indexOf(classicSongArr, classicsongObj);
+        let firstPart = classicSongArr.slice(0, index);
+        let secondPart = classicSongArr.slice(index + 1);
+        classicSongArr = firstPart.concat(secondPart);
+
         let songObj = pickRandomSong(fetchedSongObj, classicsongObj);
         let property = "singer";
     
@@ -142,7 +149,7 @@ const spotifyHandlers = Alexa.CreateStateHandler(states.SPOTIFY,{
         PlaySpotifySong(songObj)
             .then (() => {
                 let question = getQuestion() 
-                this.emit(":ask", question, question)
+                this.emit(":ask", question, REPROMPT)
             });        
     },
 
@@ -173,7 +180,13 @@ const spotifyHandlers = Alexa.CreateStateHandler(states.SPOTIFY,{
         }
         else {
             response += getFinalScore(this.attributes["quizscore"], this.attributes["counter"]);
-            speechOutput = response + " " + GAME_END_MESSAGE;
+            if (this.attributes["quizscore"] <= 3) {
+                speechOutput = response + " " + GAME_LOSE_MESSAGE;
+            }
+            else {
+                speechOutput = response + " " + GAME_WIN_MESSAGE;
+            }
+            
 
             this.response.speak(speechOutput);
             this.emit(":responseReady");
@@ -204,7 +217,7 @@ const spotifyHandlers = Alexa.CreateStateHandler(states.SPOTIFY,{
         this.emit(":responseReady");
     },
     "Unhandled": function() {
-        this.emitWithState("AnswerMusicIntent");
+        this.emitWithState('AnswerMusicIntent');
     }
 
 })
@@ -258,6 +271,12 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
         let fetchedSongObj = songRandomiser(this.attributes["songChoice"]);
         let classicsongObj = songRandomiser(classicSongArr);
         
+        // remove selected songs from classic array
+        let index = _.indexOf(classicSongArr, classicsongObj);
+        let firstPart = classicSongArr.slice(0, index);
+        let secondPart = classicSongArr.slice(index + 1);
+        classicSongArr = firstPart.concat(secondPart);
+
         let songObj = pickRandomSong(fetchedSongObj, classicsongObj);
         let property = "singer";
  
@@ -306,7 +325,13 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
         }
         else {
             response += getFinalScore(this.attributes["quizscore"], this.attributes["counter"]);
-            speechOutput = response + " " + GAME_END_MESSAGE;
+            
+            if (this.attributes["quizscore"] <= 3) {
+                speechOutput = response + " " + GAME_LOSE_MESSAGE;
+            }
+            else {
+                speechOutput = response + " " + GAME_WIN_MESSAGE;
+            }
 
             this.response.speak(speechOutput);
             this.emit(":responseReady");
@@ -344,7 +369,7 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
 
 // function defining song that alexa uses for question
 function getSong(counter, lyrics) {
-    return "Here is song number " + counter + ". Name the artist. The song is coming in 5. 4. 3. 2. 1. " + lyrics;    
+    return "Here is song number " + counter + ". The song is coming in 3. 2. 1. " + lyrics + " name the artist. ";    
 }
 
 function getQuestion() {
@@ -390,6 +415,11 @@ function songRandomiser(arr) {
     return songObj;
 }
 
+// start playlist then quit
+// function playPlaylist () {
+//     return axios.get()
+
+// }
 function fetchsongAPI(title, singer) {
     return axios.get(`https://api.musixmatch.com/ws/1.1/matcher.lyrics.get?q_track=${title}&q_artist=${singer}&apikey=c6af8e74da168c2f810eab97f6a8f603`)
     .then(response => {
@@ -510,7 +540,7 @@ function fetchArtistNames() {
         alexa.execute();
     }
 
-    const classicSongArr = 
+    let classicSongArr = 
     [ 
   { title: 'Wannabe',
     id: '0n6FMFq5bE22tNTmd6L9U4',
@@ -715,9 +745,5 @@ function fetchArtistNames() {
   { title: 'Tainted Love',
     id: '6eSenvDwIVjNQLiQPcF7rL',
     popularity: 37,
-    singer: 'Soft Cell' },
-  { title: 'The Bare Necessities - From Walt Disney\'s \'\'The Jungle Book\'\'',
-    id: '0IGNnlIB4pdxCK6WgziP9s',
-    popularity: 1,
-    singer: 'Bruce Reitherman' } 
+    singer: 'Soft Cell' }
 ]
