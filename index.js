@@ -7,7 +7,7 @@ const _ = require('underscore');
 var APP_ID = undefined;
 
 const counter = 0;
-const token = "Bearer BQBeBMLMvVmoJ21o-BMNYvZ16LFzQBsJdccWd28uUBMXS_4i2MZohQ1FuDK6LlEc_lQ22yutfZosczWpzck2FKVLWPp99CKsY7QJPzBg-W77qm3Fv_w1DDKTr1ePhAmJuiFo-3Y6PxwgrcD1hydDzHskGxzslSTlTdY6IkM06zVJCD_K4X_LGoVyoiGGw5lSEhndoAgEKb1KD0VR143hfEJQD84iaMIGJcZ8hSnBIoYmIEHNQHgRtjXzOlHizXQlNvLo4U8eiEOHXLEMoeFp7zcYh8u-q3zMqAqbJw05dCz-4SxmsBmReS8Cl8440TeuJomj7Q";
+const token = "Bearer BQBHm1CqjO2fhuxdduYJlYP_38SJYEAQYTmgo7nMvD6hQgpY1vYcAR3c8jydva5EXn5K14f7Move5LPaVuSY4iJdvNC92WruZ-cMW_YisxjKposlFWSBdapklJpfK1WeF0JTBWI36HzeAiwEDhC1toQf_A6-mhmLd_JNbdG-rR2q0PqJ5cntmgjMfdBb9AJYoVaN598I9KjXnOhypoTtG3usFu08VRn-4K7HXU3wo7QghHvvtAqTHnYTP95Ys_Z-PmA-rlbN_n_Equ8JH62c8xphtwY9Tse1jDLfhuegGNBA7WpWBczzmfNKIlnhtBLB4bRnHT4";
 
 const states = {
     START: "_START",
@@ -276,7 +276,7 @@ const quizHandlers = Alexa.CreateStateHandler(states.QUIZ,{
         let firstPart = classicSongArr.slice(0, index);
         let secondPart = classicSongArr.slice(index + 1);
         classicSongArr = firstPart.concat(secondPart);
-        let songObj  = classicSongObj;
+        let songObj  = classicsongObj;
         //let songObj = pickRandomSong(fetchedSongObj, classicsongObj);
         let property = "singer";
  
